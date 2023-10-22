@@ -1,0 +1,161 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.2.75",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Floor_plane"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "Material",
+            "normalTexture" : {
+                "index" : 0,
+                "texCoord" : 0
+            },
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 1,
+                    "texCoord" : 0
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Plane.002",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "indices" : 3,
+                    "material" : 0
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "source" : 0
+        },
+        {
+            "sampler" : 0,
+            "source" : 1
+        }
+    ],
+    "images" : [
+        {
+            "bufferView" : 4,
+            "mimeType" : "image/png",
+            "name" : "base"
+        },
+        {
+            "bufferView" : 5,
+            "mimeType" : "image/png",
+            "name" : "base.png"
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 4,
+            "max" : [
+                1,
+                0,
+                1
+            ],
+            "min" : [
+                -1,
+                0,
+                -1
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 4,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 4,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5123,
+            "count" : 6,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 48
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 32,
+            "byteOffset" : 96
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 12,
+            "byteOffset" : 128
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 382,
+            "byteOffset" : 140
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 1198,
+            "byteOffset" : 524
+        }
+    ],
+    "samplers" : [
+        {
+            "magFilter" : 9728,
+            "minFilter" : 9984
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 1724,
+            "uri" : "data:application/octet-stream;base64,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"
+        }
+    ]
+}

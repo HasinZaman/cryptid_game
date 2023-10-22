@@ -1,0 +1,13 @@
+# Blender MTL File: 'metal_floor_tile_set.blend'
+# Material Count: 1
+
+newmtl metal_floor
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.120790 0.133939
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd C:\\Users\\hasin\\Documents\\cryptid_game\\blender\\metal_floor_tile_set\\uv\\colour_2.png
