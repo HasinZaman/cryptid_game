@@ -20,7 +20,9 @@ use bevy_mod_raycast::{
     RaycastSystem,
 };
 
-pub const EAR_GAP: f32 = 0.5;
+use crate::scene::prop::sound_source::SoundSource;
+
+pub const EAR_GAP: f32 = 0.25;
 
 #[derive(Component)]
 pub struct Controllable;
@@ -393,21 +395,71 @@ fn create_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
 
 pub fn update_sound_sink_pos(
     player_query: Query<&Transform, With<Controllable>>,
-    mut sound_emitter_query: Query<(&mut SpatialSettings, &Transform)>,
+    mut sound_emitter_query: Query<(&mut SpatialSettings, Option<&Transform>, Option<&SoundSource>)>,
 ) {
     let Some(player) = player_query.iter().next() else {
         return;
     };
 
-    for (mut emitter, source) in &mut sound_emitter_query {
+    for (mut emitter, transform, sound_source) in &mut sound_emitter_query {
         let emitter: &mut SpatialSettings = emitter.as_mut();
-
-        let new_state = SpatialSettings::new(player.clone(), EAR_GAP, source.translation);
+        
+        let new_state = match (transform, sound_source) {
+            (Some(transform), None) => SpatialSettings::new(player.clone(), EAR_GAP, transform.translation),
+            (Some(_), Some(source)) |
+            (None, Some(source)) => SpatialSettings::new(player.clone(), EAR_GAP, source.source(&player.translation)),
+            _=> emitter.clone(),
+        };
 
         *emitter = new_state;
     }
 }
+/*
+pub fn update_sound_level(
+    player_query: Query<&Transform, With<Controllable>>,
+    mut sound_settings: Query<(&mut PlaybackSettings, Option<&Transform>, Option<&SoundSource>, &SoundVolume)>
+) {
+    let Some(player) = player_query.iter().next() else {
+        return;
+    };
 
+    println!("Start");
+    for (mut sound_setting, transform, sound_source, volume) in &mut sound_settings {
+        let sound_setting: &mut PlaybackSettings = sound_setting.as_mut();
+
+        sound_setting.volume = match (transform, sound_source) {
+            (Some(transform), None) => Volume::new_relative(
+                volume.sound_level(
+                    (transform.translation-player.translation).length()
+                )
+            ),
+            (Some(_), Some(source)) |
+            (None, Some(source)) => {
+                println!(
+                    "dist: {} -> {}",
+                    (source.source(&player.translation) - player.translation).length(),
+                    volume.sound_level(
+                        (source.source(&player.translation) - player.translation).length()
+                    )
+                );
+                Volume::new_relative(
+                    volume.sound_level(
+                        (source.source(&player.translation) - player.translation).length()
+                    )
+                )
+            },
+            _=> sound_setting.volume,
+        };
+        
+        sound_setting.paused = match sound_setting.volume {
+            Volume::Relative(val) |
+            Volume::Absolute(val) => {
+                val.get() > 0.001
+            },
+        };
+    }
+}
+*/
 pub fn update_light_dir(
     target: Res<PlayerTarget>,
     mut player_query: Query<&mut Transform, With<SpotLight>>,
@@ -435,13 +487,19 @@ impl Plugin for PlayerPlugin {
                 update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
             )
             .add_systems(Startup, (create_player,))
-            .add_systems(
+            .add_systems(//player movement
                 Update,
                 (
                     move_controllable,
                     rotate_camera_view,
                     follow,
                     update_light_dir,
+                )
+            ).add_systems(//update sound
+                Update,
+                (
+                    update_sound_sink_pos,
+                    //update_sound_level
                 ),
             );
     }

@@ -1,8 +1,9 @@
 use std::f32::consts::PI;
 
+use bevy::audio::{PlaybackMode, Volume};
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
-    App, AssetServer, Assets, Commands, MaterialMeshBundle, Plugin, ResMut, Startup, Res,
+    App, AssetServer, Assets, Commands, MaterialMeshBundle, Plugin, ResMut, Startup, Res, PlaybackSettings, SpatialSettings, default,
 };
 use bevy::transform::components::Transform;
 use bevy_mod_raycast::RaycastMesh;
@@ -10,6 +11,7 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::player::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
+use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
 
@@ -275,6 +277,106 @@ fn create_scene(
         ));
     }
     //windows
+    {
+        let rain_window_loop = asset_server.load("rain/rain_window_loop.ogg");
+        commands.spawn(
+            (
+                //window mesh
+                PropSoundBundle {
+                    sound_source: SoundSource::Point(Vec3{
+                        x: 1.55556,
+                        y: 1.58101,
+                        z: 0.,
+                    }),
+                    source: rain_window_loop.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Loop,
+                        volume: Volume::new_relative(2.),
+                        ..Default::default()
+                    },
+                    spatial: SpatialSettings::new(
+                        Transform::default(),
+                        1.0,
+                        Vec3::ZERO
+                    ),
+                },
+                SoundVolume::new(0.5, 10.),
+            )
+        );
+        commands.spawn(
+            (
+                //window mesh
+                PropSoundBundle {
+                    sound_source: SoundSource::Point(Vec3{
+                        x: 4.66667,
+                        y: 1.58101,
+                        z: 0.,
+                    }),
+                    source: rain_window_loop.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Loop,
+                        volume: Volume::new_relative(2.),
+                        ..Default::default()
+                    },
+                    spatial: SpatialSettings::new(
+                        Transform::default(),
+                        1.0,
+                        Vec3::ZERO
+                    ),
+                },
+                SoundVolume::new(0.5, 10.),
+            )
+        );
+        commands.spawn(
+            (
+                //window mesh
+                PropSoundBundle {
+                    sound_source: SoundSource::Point(Vec3{
+                        x: 7.77778,
+                        y: 1.58101,
+                        z: 0.,
+                    }),
+                    source: rain_window_loop.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Loop,
+                        volume: Volume::new_relative(2.),
+                        ..Default::default()
+                    },
+                    spatial: SpatialSettings::new(
+                        Transform::default(),
+                        1.0,
+                        Vec3::ZERO
+                    ),
+                },
+                SoundVolume::new(0.5, 10.),
+            )
+        );
+        commands.spawn(
+            (
+                //window mesh
+                PropSoundBundle {
+                    sound_source: SoundSource::Point(Vec3{
+                        x: 10.8889,
+                        y: 1.58101,
+                        z: 0.,
+                    }),
+                    source: rain_window_loop.clone(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Loop,
+                        volume: Volume::new_relative(2.),
+                        ..Default::default()
+                    },
+                    spatial: SpatialSettings::new(
+                        Transform::default(),
+                        1.0,
+                        Vec3::ZERO
+                    ),
+                },
+                SoundVolume::new(0.5, 10.),
+            )
+        );
+    }
+    
     // commands.spawn((
     //     a
     // ))

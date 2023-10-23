@@ -14,7 +14,7 @@ pub fn add_rain(mut commands: Commands, asset_server: ResMut<AssetServer>) {
             source: asset_server.load("rain/rain_loop.ogg"),
             settings: PlaybackSettings {
                 mode: PlaybackMode::Loop,
-                volume: Volume::new_relative(1.),
+                volume: Volume::new_relative(0.5),
                 speed: 1.,
                 paused: false,
             },
