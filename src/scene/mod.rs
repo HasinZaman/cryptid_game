@@ -11,6 +11,8 @@ use bevy_mod_raycast::RaycastMesh;
 use crate::player::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
+use self::prop::materials::plastic::PlasticMaterial;
+use self::prop::{PropPlugin, Props};
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
@@ -18,15 +20,18 @@ use self::wall::{WallMaterial, WallPlugin, Walls};
 pub mod floor;
 pub mod shadow_caster;
 pub mod wall;
+pub mod prop;
 
 fn create_scene(
     mut commands: Commands,
     floors: Res<Floors>,
     walls: Res<Walls>,
+    plastic_props: Res<Props<PlasticMaterial>>,
     asset_server: ResMut<AssetServer>,
     mut floor_materials: ResMut<Assets<FloorMaterial>>,
     mut wall_materials: ResMut<Assets<WallMaterial>>,
     mut shadow_caster_material: ResMut<Assets<ShadowCasterMaterial>>,
+    mut plastic_material: ResMut<Assets<PlasticMaterial>>,
 ) {
     //shadow caster
     {
@@ -377,6 +382,23 @@ fn create_scene(
         );
     }
     
+    //props
+    {
+        commands.spawn(
+            (
+                prop::into_mesh_bundle(
+                    plastic_props.0.get("plastic_bin_1").unwrap(),
+                    &mut plastic_material,
+                    Some(Transform {
+                        translation: Vec3 {x: 5., y: 0., z: -5.},
+                        scale: Vec3::new(3., 3., 3.),
+                        ..default()
+                    })
+                ),
+                RaycastMesh::<PlayerTargetSet>::default(),
+            )
+        );
+    }
     // commands.spawn((
     //     a
     // ))
@@ -410,7 +432,7 @@ pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((FloorPlugin, WallPlugin))
+        app.add_plugins((PropPlugin, FloorPlugin, WallPlugin))
             .add_systems(Startup, (create_scene,)); //PostStartup (Load scene)
                                                     //.add_systems(
                                                     //     Update,
