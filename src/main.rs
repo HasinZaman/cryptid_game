@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_mod_raycast::prelude::low_latency_window_plugin;
-use bevy_obj::ObjPlugin;
 use lightning::LightningPlugin;
 use player::PlayerPlugin;
 use rain::RainPlugin;
@@ -18,7 +17,6 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(low_latency_window_plugin()),
             //DefaultPlugins,
-            ObjPlugin,
             WorldPlugin,
             PlayerPlugin,
             LightningPlugin,
