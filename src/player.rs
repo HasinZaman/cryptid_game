@@ -8,10 +8,9 @@ use bevy::{
         default, AssetServer, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
         EventReader, First, Input, IntoSystemConfigs, KeyCode, Quat, Query, Res, ResMut, Resource,
         SpatialSettings, SpotLight, SpotLightBundle, Startup, Transform, Update, Vec3, With,
-        Without,
+        Without, Assets, MaterialMeshBundle, StandardMaterial,
     },
     reflect::Reflect,
-    scene::SceneBundle,
     time::Time,
     window::CursorMoved,
 };
@@ -20,7 +19,7 @@ use bevy_mod_raycast::{
     RaycastSystem,
 };
 
-use crate::scene::prop::sound_source::SoundSource;
+use crate::scene::prop::{sound_source::SoundSource, PropVisibilityGoal};
 
 pub const EAR_GAP: f32 = 0.25;
 
@@ -285,7 +284,11 @@ fn update_player_target(
     }
 }
 
-fn create_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
+fn create_player(
+    mut commands: Commands,
+    asset_server: ResMut<AssetServer>,
+    mut materials: ResMut<Assets<StandardMaterial>>
+) {
     //add player viewing raycast
     commands.insert_resource(RaycastPluginState::<PlayerTargetSet>::default());
 
@@ -294,13 +297,14 @@ fn create_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
     //load mesh
     let player = commands
         .spawn((
-            SceneBundle {
-                scene: asset_server.load("meshes/cube.glb#Scene0"),
+            MaterialMeshBundle{
+                mesh: asset_server.load("meshes/cube.glb#Mesh0/Primitive0"),
+                material: materials.add(StandardMaterial::default()),
                 transform: Transform {
                     translation: Vec3 {
-                        x: 0.,
+                        x: -5.,
                         y: 0.5,
-                        z: 0.,
+                        z: -5.,
                     },
                     rotation: Quat::default(),
                     scale: Vec3 {
@@ -309,9 +313,10 @@ fn create_player(mut commands: Commands, asset_server: ResMut<AssetServer>) {
                         z: 0.5,
                     },
                 },
-                ..default()
+                ..Default::default()
             },
             Controllable,
+            PropVisibilityGoal,
         ))
         .id();
 

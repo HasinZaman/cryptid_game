@@ -12,7 +12,7 @@ use crate::player::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
 use self::prop::materials::plastic::PlasticMaterial;
-use self::prop::{PropPlugin, Props};
+use self::prop::{PropPlugin, Props, PropVisibility, PropVisibilityBlocker, PropVisibilitySource};
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
@@ -35,12 +35,17 @@ fn create_scene(
 ) {
     //shadow caster
     {
-        commands.spawn(MaterialMeshBundle {
-            mesh: asset_server
-                .load("scenes/dev_playground/room_shadow_caster/mesh/mesh.glb#Mesh0/Primitive0"),
-            material: shadow_caster_material.add(Default::default()),
-            ..Default::default()
-        });
+        commands.spawn(
+            (
+                MaterialMeshBundle {
+                mesh: asset_server
+                    .load("scenes/dev_playground/room_shadow_caster/mesh/mesh.glb#Mesh0/Primitive0"),
+                material: shadow_caster_material.add(Default::default()),
+                ..Default::default()
+            },
+            PropVisibilityBlocker,
+        )
+    );
     }
     //walls
     {
@@ -395,6 +400,9 @@ fn create_scene(
                         ..default()
                     })
                 ),
+                plastic_props.0.get("plastic_bin_1").unwrap().clone(),
+                PropVisibility::Hidden,
+                PropVisibilitySource(vec![Vec3::ZERO]),
                 RaycastMesh::<PlayerTargetSet>::default(),
             )
         );
