@@ -1,5 +1,6 @@
-use bevy::prelude::{Vec3, Component, Bundle, Handle, AudioSource, PlaybackSettings, SpatialSettings};
-
+use bevy::prelude::{
+    AudioSource, Bundle, Component, Handle, PlaybackSettings, SpatialSettings, Vec3,
+};
 
 #[derive(Component)]
 pub enum SoundSource {
@@ -13,12 +14,14 @@ impl SoundSource {
             SoundSource::Point(pos) => pos.clone(),
             SoundSource::Area(pos) => {
                 pos.iter()
-                    .max_by(
-                        |vec_1, vec_2| (*listener_pos - **vec_1).length()
+                    .max_by(|vec_1, vec_2| {
+                        (*listener_pos - **vec_1)
+                            .length()
                             .total_cmp(&(*listener_pos - **vec_2).length())
-                    ).unwrap()//should handle if vec list is empty
+                    })
+                    .unwrap() //should handle if vec list is empty
                     .clone()
-            },
+            }
         }
     }
 }
@@ -46,7 +49,6 @@ impl Default for SoundVolume {
         Self::new(1., 10.)
     }
 }
-
 
 impl Default for SoundSource {
     fn default() -> Self {

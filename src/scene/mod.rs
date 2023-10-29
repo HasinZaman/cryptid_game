@@ -3,7 +3,8 @@ use std::f32::consts::PI;
 use bevy::audio::{PlaybackMode, Volume};
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
-    App, AssetServer, Assets, Commands, MaterialMeshBundle, Plugin, ResMut, Startup, Res, PlaybackSettings, SpatialSettings, default,
+    default, App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res,
+    ResMut, SpatialSettings, Startup,
 };
 use bevy::transform::components::Transform;
 use bevy_mod_raycast::RaycastMesh;
@@ -12,15 +13,15 @@ use crate::player::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
 use self::prop::materials::plastic::PlasticMaterial;
-use self::prop::{PropPlugin, Props, PropVisibility, PropVisibilityBlocker, PropVisibilitySource};
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
+use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, Props, PropVisibilitySource};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
 
 pub mod floor;
+pub mod prop;
 pub mod shadow_caster;
 pub mod wall;
-pub mod prop;
 
 fn create_scene(
     mut commands: Commands,
@@ -35,17 +36,16 @@ fn create_scene(
 ) {
     //shadow caster
     {
-        commands.spawn(
-            (
-                MaterialMeshBundle {
-                mesh: asset_server
-                    .load("scenes/dev_playground/room_shadow_caster/mesh/mesh.glb#Mesh0/Primitive0"),
+        commands.spawn((
+            MaterialMeshBundle {
+                mesh: asset_server.load(
+                    "scenes/dev_playground/room_shadow_caster/mesh/mesh.glb#Mesh0/Primitive0",
+                ),
                 material: shadow_caster_material.add(Default::default()),
                 ..Default::default()
             },
             PropVisibilityBlocker,
-        )
-    );
+        ));
     }
     //walls
     {
@@ -289,123 +289,101 @@ fn create_scene(
     //windows
     {
         let rain_window_loop = asset_server.load("rain/rain_window_loop.ogg");
-        commands.spawn(
-            (
-                //window mesh
-                PropSoundBundle {
-                    sound_source: SoundSource::Point(Vec3{
-                        x: 1.55556,
-                        y: 1.58101,
-                        z: 0.,
-                    }),
-                    source: rain_window_loop.clone(),
-                    settings: PlaybackSettings {
-                        mode: PlaybackMode::Loop,
-                        volume: Volume::new_relative(2.),
-                        ..Default::default()
-                    },
-                    spatial: SpatialSettings::new(
-                        Transform::default(),
-                        1.0,
-                        Vec3::ZERO
-                    ),
+        commands.spawn((
+            //window mesh
+            PropSoundBundle {
+                sound_source: SoundSource::Point(Vec3 {
+                    x: 1.55556,
+                    y: 1.58101,
+                    z: 0.,
+                }),
+                source: rain_window_loop.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    volume: Volume::new_relative(2.),
+                    ..Default::default()
                 },
-                SoundVolume::new(0.5, 10.),
-            )
-        );
-        commands.spawn(
-            (
-                //window mesh
-                PropSoundBundle {
-                    sound_source: SoundSource::Point(Vec3{
-                        x: 4.66667,
-                        y: 1.58101,
-                        z: 0.,
-                    }),
-                    source: rain_window_loop.clone(),
-                    settings: PlaybackSettings {
-                        mode: PlaybackMode::Loop,
-                        volume: Volume::new_relative(2.),
-                        ..Default::default()
-                    },
-                    spatial: SpatialSettings::new(
-                        Transform::default(),
-                        1.0,
-                        Vec3::ZERO
-                    ),
+                spatial: SpatialSettings::new(Transform::default(), 1.0, Vec3::ZERO),
+            },
+            SoundVolume::new(0.5, 10.),
+        ));
+        commands.spawn((
+            //window mesh
+            PropSoundBundle {
+                sound_source: SoundSource::Point(Vec3 {
+                    x: 4.66667,
+                    y: 1.58101,
+                    z: 0.,
+                }),
+                source: rain_window_loop.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    volume: Volume::new_relative(2.),
+                    ..Default::default()
                 },
-                SoundVolume::new(0.5, 10.),
-            )
-        );
-        commands.spawn(
-            (
-                //window mesh
-                PropSoundBundle {
-                    sound_source: SoundSource::Point(Vec3{
-                        x: 7.77778,
-                        y: 1.58101,
-                        z: 0.,
-                    }),
-                    source: rain_window_loop.clone(),
-                    settings: PlaybackSettings {
-                        mode: PlaybackMode::Loop,
-                        volume: Volume::new_relative(2.),
-                        ..Default::default()
-                    },
-                    spatial: SpatialSettings::new(
-                        Transform::default(),
-                        1.0,
-                        Vec3::ZERO
-                    ),
+                spatial: SpatialSettings::new(Transform::default(), 1.0, Vec3::ZERO),
+            },
+            SoundVolume::new(0.5, 10.),
+        ));
+        commands.spawn((
+            //window mesh
+            PropSoundBundle {
+                sound_source: SoundSource::Point(Vec3 {
+                    x: 7.77778,
+                    y: 1.58101,
+                    z: 0.,
+                }),
+                source: rain_window_loop.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    volume: Volume::new_relative(2.),
+                    ..Default::default()
                 },
-                SoundVolume::new(0.5, 10.),
-            )
-        );
-        commands.spawn(
-            (
-                //window mesh
-                PropSoundBundle {
-                    sound_source: SoundSource::Point(Vec3{
-                        x: 10.8889,
-                        y: 1.58101,
-                        z: 0.,
-                    }),
-                    source: rain_window_loop.clone(),
-                    settings: PlaybackSettings {
-                        mode: PlaybackMode::Loop,
-                        volume: Volume::new_relative(2.),
-                        ..Default::default()
-                    },
-                    spatial: SpatialSettings::new(
-                        Transform::default(),
-                        1.0,
-                        Vec3::ZERO
-                    ),
+                spatial: SpatialSettings::new(Transform::default(), 1.0, Vec3::ZERO),
+            },
+            SoundVolume::new(0.5, 10.),
+        ));
+        commands.spawn((
+            //window mesh
+            PropSoundBundle {
+                sound_source: SoundSource::Point(Vec3 {
+                    x: 10.8889,
+                    y: 1.58101,
+                    z: 0.,
+                }),
+                source: rain_window_loop.clone(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    volume: Volume::new_relative(2.),
+                    ..Default::default()
                 },
-                SoundVolume::new(0.5, 10.),
-            )
-        );
+                spatial: SpatialSettings::new(Transform::default(), 1.0, Vec3::ZERO),
+            },
+            SoundVolume::new(0.5, 10.),
+        ));
     }
-    
+
     //props
     {
-        commands.spawn(
-            (
-                prop::into_mesh_bundle(
-                    plastic_props.0.get("plastic_bin_1").unwrap(),
-                    &mut plastic_material,
-                    Some(Transform {
-                        translation: Vec3 {x: 5., y: 0., z: -5.},
-                        scale: Vec3::new(3., 3., 3.),
-                        ..default()
-                    })
-                ),
-                plastic_props.0.get("plastic_bin_1").unwrap().clone(),
-                PropVisibility::Hidden,
-                PropVisibilitySource(vec![Vec3::ZERO]),
-                RaycastMesh::<PlayerTargetSet>::default(),
-            )
-        );
+        commands.spawn((
+            prop::into_mesh_bundle(
+                plastic_props.0.get("plastic_bin_1").unwrap(),
+                &mut plastic_material,
+                Some(Transform {
+                    translation: Vec3 {
+                        x: 5.,
+                        y: 0.,
+                        z: -5.,
+                    },
+                    scale: Vec3::new(3., 3., 3.),
+                    ..default()
+                }),
+            ),
+            plastic_props.0.get("plastic_bin_1").unwrap().clone(),
+            PropVisibility::Hidden,
+            PropVisibilitySource(vec![Vec3::ZERO]),
+            RaycastMesh::<PlayerTargetSet>::default(),
+        ));
     }
     // commands.spawn((
     //     a

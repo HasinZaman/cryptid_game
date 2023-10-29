@@ -1,5 +1,17 @@
-use bevy::{utils::HashMap, prelude::{Resource, Handle, Mesh, ResMut, Assets, Transform, MaterialMeshBundle, default, AssetServer, Plugin, App, PreStartup, Material, Color, Component, Commands, Query, Entity, With, Update, Startup, Gizmos, Quat, Vec3}, reflect::TypeUuid, asset::Asset};
-use bevy_mod_raycast::{system_param::{RaycastSettings, Raycast, RaycastVisibility}, Ray3d};
+use bevy::{
+    asset::Asset,
+    prelude::{
+        default, App, AssetServer, Assets, Color, Commands, Component, Entity, Handle, Material,
+        MaterialMeshBundle, Mesh, Plugin, PreStartup, Query, ResMut, Resource, Startup, Transform,
+        Update, Vec3, With,
+    },
+    reflect::TypeUuid,
+    utils::HashMap,
+};
+use bevy_mod_raycast::{
+    system_param::{Raycast, RaycastSettings, RaycastVisibility},
+    Ray3d,
+};
 
 use crate::player::Controllable;
 
@@ -7,8 +19,8 @@ use self::materials::{plastic::PlasticMaterial, MaterialsPlugin};
 
 use super::shadow_caster::ShadowCasterMaterial;
 
-pub mod sound_source;
 pub mod materials;
+pub mod sound_source;
 
 #[derive(Component)]
 pub struct PropVisibilityBlocker;
@@ -31,14 +43,11 @@ impl From<Transform> for PropVisibilitySource {
 #[derive(Component, Debug)]
 pub enum PropVisibility {
     Seen,
-    Hidden  
+    Hidden,
 }
 
 #[derive(Component)]
 pub struct ForgettableProp;
-
-#[derive(Component)]
-pub struct CachedMaterial<M: TypeUuid + Asset + Material>(Handle<M>);
 
 pub fn hide_unseen_props<M: TypeUuid + Asset + Material>(
     mut commands: Commands,
@@ -50,7 +59,8 @@ pub fn hide_unseen_props<M: TypeUuid + Asset + Material>(
             continue;
         };
 
-        commands.entity(entity)
+        commands
+            .entity(entity)
             .remove::<Handle<M>>()
             .insert(shadow_caster_material.add(ShadowCasterMaterial::default()));
     }
@@ -64,8 +74,9 @@ pub fn show_seen_props<M: TypeUuid + Asset + Material>(
         if let PropVisibility::Hidden = visibility {
             continue;
         };
-        
-        commands.entity(entity)
+
+        commands
+            .entity(entity)
             .remove::<Handle<ShadowCasterMaterial>>()
             .insert(material.add(prop.material.clone()));
     }
@@ -79,10 +90,15 @@ pub fn update_prop_visibility(
     //get targets
     target_query: Query<Entity, (With<PropVisibilityGoal>, With<Handle<Mesh>>)>,
     blocker_query: Query<Entity, (With<PropVisibilityBlocker>, With<Handle<Mesh>>)>,
-    
+
     mut ray_cast: Raycast,
-    
-    mut query: Query<(&Transform, Option<&ForgettableProp>, &mut PropVisibility, &PropVisibilitySource)>
+
+    mut query: Query<(
+        &Transform,
+        Option<&ForgettableProp>,
+        &mut PropVisibility,
+        &PropVisibilitySource,
+    )>,
 ) {
     let Some(player_transform) = player_query.iter().next() else {
         return;
@@ -95,21 +111,20 @@ pub fn update_prop_visibility(
                 origin.x * transform.scale.x + transform.translation.x,
                 origin.x * transform.scale.x + transform.translation.x,
             );
-            
+
             let direction = (player_transform.translation - origin).normalize();
 
-            let ray = Ray3d::new(
-                origin,
-                direction
-            );
+            let ray = Ray3d::new(origin, direction);
 
             let cast = ray_cast.cast_ray(
                 ray,
-                &RaycastSettings{
+                &RaycastSettings {
                     visibility: RaycastVisibility::MustBeVisible,
-                    filter: &|entity: Entity| target_query.contains(entity) || blocker_query.contains(entity),
+                    filter: &|entity: Entity| {
+                        target_query.contains(entity) || blocker_query.contains(entity)
+                    },
                     early_exit_test: &|_| true,
-                }
+                },
             );
 
             let Some((entity, _)) = cast.iter().next() else {
@@ -118,18 +133,18 @@ pub fn update_prop_visibility(
             {
                 let visibility = visibility.as_mut();
                 match (target_query.contains(*entity), &visibility, forgettable) {
-                    (false, PropVisibility::Seen, None) | (false, PropVisibility::Hidden, _)| (true, PropVisibility::Seen, _) => {
-                    },
+                    (false, PropVisibility::Seen, None)
+                    | (false, PropVisibility::Hidden, _)
+                    | (true, PropVisibility::Seen, _) => {}
 
                     (true, PropVisibility::Hidden, None) => {
                         *visibility = PropVisibility::Seen;
-                    },
+                    }
                     (true, PropVisibility::Hidden, Some(_)) => {
-                        commands.entity(*entity)
-                            .remove::<ForgettableProp>();
+                        commands.entity(*entity).remove::<ForgettableProp>();
                         *visibility = PropVisibility::Seen;
-                    },
-                    
+                    }
+
                     (false, PropVisibility::Seen, Some(_)) => {
                         *visibility = PropVisibility::Hidden;
                     }
@@ -160,26 +175,28 @@ pub fn into_mesh_bundle<M: TypeUuid + Asset + Material>(
     materials: &mut ResMut<Assets<M>>,
     transform: Option<Transform>,
 ) -> MaterialMeshBundle<M> {
-    // let cached_material = CachedMaterial::<M>(materials.add(prop.material.clone()));
     // (
-        match transform {
-            Some(t) => MaterialMeshBundle {
-                mesh: prop.mesh.clone(),
-                material: materials.add(prop.material.clone()),
-                transform: t,
-                ..default()
-            },
-            None => MaterialMeshBundle {
-                mesh: prop.mesh.clone(),
-                material: materials.add(prop.material.clone()),
-                ..default()
-            },
-        }//,
-    //     cached_material
-    // )
+    match transform {
+        Some(t) => MaterialMeshBundle {
+            mesh: prop.mesh.clone(),
+            material: materials.add(prop.material.clone()),
+            transform: t,
+            ..default()
+        },
+        None => MaterialMeshBundle {
+            mesh: prop.mesh.clone(),
+            material: materials.add(prop.material.clone()),
+            ..default()
+        },
+    } //,
+      //     cached_material
+      // )
 }
 
-fn load_plastic_prop(asset_server: &ResMut<AssetServer>, dir: &'static str) -> Prop<PlasticMaterial> {
+fn load_plastic_prop(
+    asset_server: &ResMut<AssetServer>,
+    dir: &'static str,
+) -> Prop<PlasticMaterial> {
     Prop {
         mesh: asset_server.load(format!("props/{dir}/mesh/mesh.glb#Mesh0/Primitive0")),
         material: PlasticMaterial {
@@ -190,15 +207,17 @@ fn load_plastic_prop(asset_server: &ResMut<AssetServer>, dir: &'static str) -> P
     }
 }
 
-pub fn load_plastic_props(mut props: ResMut<Props<PlasticMaterial>>, asset_server: ResMut<AssetServer>) {
+pub fn load_plastic_props(
+    mut props: ResMut<Props<PlasticMaterial>>,
+    asset_server: ResMut<AssetServer>,
+) {
     props.as_mut().0.insert(
         "plastic_bin_1".into(),
         load_plastic_prop(&asset_server, "plastic_bin_1"),
     );
 }
 
-pub fn setup(mut _commands: Commands) {
-}
+pub fn setup(mut _commands: Commands) {}
 
 pub struct PropPlugin;
 

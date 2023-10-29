@@ -1,7 +1,5 @@
 use bevy::{
-    pbr::{
-        MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE,
-    },
+    pbr::{MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE},
     prelude::*,
     reflect::{Reflect, TypeUuid},
     render::{
@@ -52,7 +50,12 @@ pub struct PlasticMaterial {
 impl Default for PlasticMaterial {
     fn default() -> Self {
         PlasticMaterial {
-            colour: Color::Rgba { red: 1., green: 1., blue: 1., alpha: 1. },
+            colour: Color::Rgba {
+                red: 1.,
+                green: 1.,
+                blue: 1.,
+                alpha: 1.,
+            },
             metallic: 0.1,
             scale_1: Vec2 { x: 1., y: 1. },
             offset_1: Vec2 { x: 0., y: 0. },
