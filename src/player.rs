@@ -5,12 +5,13 @@ use bevy::{
     core_pipeline::clear_color::ClearColorConfig,
     ecs::entity::Entity,
     prelude::{
-        default, AssetServer, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
-        EventReader, First, Input, IntoSystemConfigs, KeyCode, Quat, Query, Res, ResMut, Resource,
-        SpatialSettings, SpotLight, SpotLightBundle, Startup, Transform, Update, Vec3, With,
-        Without, Assets, MaterialMeshBundle, StandardMaterial,
+        default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
+        EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat, Query, Res,
+        ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle, StandardMaterial, Startup,
+        Transform, Update, Vec3, With, Without,
     },
     reflect::Reflect,
+    render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
     window::CursorMoved,
 };
@@ -19,7 +20,10 @@ use bevy_mod_raycast::{
     RaycastSystem,
 };
 
-use crate::scene::prop::{sound_source::SoundSource, PropVisibilityGoal};
+use crate::{
+    humanoid::load_humanoid,
+    scene::prop::{sound_source::SoundSource, PropVisibilityGoal},
+};
 
 pub const EAR_GAP: f32 = 0.25;
 
@@ -62,7 +66,7 @@ pub struct Follow(Option<FollowTarget>);
 
 fn follow(
     //mut controllable_query: Query<&Transform, With<Controllable>>,
-    follow_target_query: Query<(Entity, &Transform), Without<Follow>>,
+    follow_target_query: Query<(Entity, &GlobalTransform), Without<Follow>>,
     mut follow_query: Query<(&mut Transform, &Follow)>,
 ) {
     for (mut transform, follow) in &mut follow_query {
@@ -72,16 +76,16 @@ fn follow(
             continue;
         };
 
-        let mut target_transform = match follow_target_query.get(*target) {
+        let target_transform = match follow_target_query.get(*target) {
             Ok(val) => val,
             Err(_err) => todo!(),
         }
         .1
         .clone();
 
-        let target_pos = target_transform.translation;
+        let target_pos = target_transform.translation();
 
-        target_transform.translation = Vec3::ZERO;
+        //target_transform.translation = Vec3::ZERO;
 
         // let target_transform_matrix = transform.compute_matrix();
 
@@ -286,39 +290,27 @@ fn update_player_target(
 
 fn create_player(
     mut commands: Commands,
-    asset_server: ResMut<AssetServer>,
-    mut materials: ResMut<Assets<StandardMaterial>>
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut inverse_bindposes: ResMut<Assets<SkinnedMeshInverseBindposes>>,
 ) {
-    //add player viewing raycast
     commands.insert_resource(RaycastPluginState::<PlayerTargetSet>::default());
 
     commands.insert_resource(PlayerTarget(None));
 
     //load mesh
-    let player = commands
-        .spawn((
-            MaterialMeshBundle{
-                mesh: asset_server.load("meshes/cube.glb#Mesh0/Primitive0"),
-                material: materials.add(StandardMaterial::default()),
-                transform: Transform {
-                    translation: Vec3 {
-                        x: -5.,
-                        y: 0.5,
-                        z: -5.,
-                    },
-                    rotation: Quat::default(),
-                    scale: Vec3 {
-                        x: 0.5,
-                        y: 0.5,
-                        z: 0.5,
-                    },
-                },
-                ..Default::default()
-            },
-            Controllable,
-            PropVisibilityGoal,
-        ))
-        .id();
+    let (player, humanoid) = load_humanoid(
+        "character\\mesh\\character.gltf",
+        &mut commands,
+        &asset_server,
+        &mut materials,
+        &mut inverse_bindposes,
+    )
+    .unwrap();
+
+    commands
+        .entity(player)
+        .insert((Controllable,));
 
     //followable camera
     let camera_and_light_transform = Transform::from_xyz(0., 0., 10.).looking_to(
@@ -359,8 +351,11 @@ fn create_player(
                 r: 50.,
             },
         })),
-        RaycastSource::<PlayerTargetSet>::new(),
+        RaycastSource::<PlayerTargetSet>::new()
     ));
+    commands.entity(*humanoid.meshes.get("man").unwrap())
+        .insert((PropVisibilityGoal,));
+
     commands.spawn((
         SpotLightBundle {
             spot_light: SpotLight {
@@ -384,10 +379,10 @@ fn create_player(
             ..default()
         },
         Follow(Some(FollowTarget {
-            target: player.into(),
+            target: humanoid.right_arm.2,
             offset: Coord::Cartesian {
                 x: 0.,
-                y: 0.,
+                y: 0.5,
                 z: 0.,
             },
         })),
@@ -400,7 +395,11 @@ fn create_player(
 
 pub fn update_sound_sink_pos(
     player_query: Query<&Transform, With<Controllable>>,
-    mut sound_emitter_query: Query<(&mut SpatialSettings, Option<&Transform>, Option<&SoundSource>)>,
+    mut sound_emitter_query: Query<(
+        &mut SpatialSettings,
+        Option<&Transform>,
+        Option<&SoundSource>,
+    )>,
 ) {
     let Some(player) = player_query.iter().next() else {
         return;
@@ -408,12 +407,15 @@ pub fn update_sound_sink_pos(
 
     for (mut emitter, transform, sound_source) in &mut sound_emitter_query {
         let emitter: &mut SpatialSettings = emitter.as_mut();
-        
+
         let new_state = match (transform, sound_source) {
-            (Some(transform), None) => SpatialSettings::new(player.clone(), EAR_GAP, transform.translation),
-            (Some(_), Some(source)) |
-            (None, Some(source)) => SpatialSettings::new(player.clone(), EAR_GAP, source.source(&player.translation)),
-            _=> emitter.clone(),
+            (Some(transform), None) => {
+                SpatialSettings::new(player.clone(), EAR_GAP, transform.translation)
+            }
+            (Some(_), Some(source)) | (None, Some(source)) => {
+                SpatialSettings::new(player.clone(), EAR_GAP, source.source(&player.translation))
+            }
+            _ => emitter.clone(),
         };
 
         *emitter = new_state;
@@ -455,7 +457,7 @@ pub fn update_sound_level(
             },
             _=> sound_setting.volume,
         };
-        
+
         sound_setting.paused = match sound_setting.volume {
             Volume::Relative(val) |
             Volume::Absolute(val) => {
@@ -492,15 +494,18 @@ impl Plugin for PlayerPlugin {
                 update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
             )
             .add_systems(Startup, (create_player,))
-            .add_systems(//player movement
+            .add_systems(
+                //player movement
                 Update,
                 (
                     move_controllable,
                     rotate_camera_view,
                     follow,
                     update_light_dir,
-                )
-            ).add_systems(//update sound
+                ),
+            )
+            .add_systems(
+                //update sound
                 Update,
                 (
                     update_sound_sink_pos,

@@ -1,11 +1,15 @@
+// use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_mod_raycast::prelude::low_latency_window_plugin;
+// use bevy::diagnostic::*;
+use humanoid::HumanoidPlugin;
 use lightning::LightningPlugin;
 use player::PlayerPlugin;
 use rain::RainPlugin;
 use scene::shadow_caster::ShadowCasterMaterial;
 use scene::WorldPlugin;
 
+pub mod humanoid;
 pub mod lightning;
 pub mod player;
 pub mod rain;
@@ -21,7 +25,13 @@ fn main() {
             PlayerPlugin,
             LightningPlugin,
             RainPlugin,
+            MaterialPlugin::<ShadowCasterMaterial>::default(),
+            HumanoidPlugin,
         ))
-        .add_plugins((MaterialPlugin::<ShadowCasterMaterial>::default(),))
+        //debug plugins
+        // .add_plugins((
+        //     LogDiagnosticsPlugin::default(),
+        //     FrameTimeDiagnosticsPlugin::default()
+        // ))
         .run();
 }
