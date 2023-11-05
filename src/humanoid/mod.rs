@@ -274,7 +274,7 @@ pub fn load_humanoid(
                     }
                 }
             }
-            println!("{:#?}",humanoid_builder.meshes);
+            //println!("{:#?}",humanoid_builder.meshes);
             (entity, transform)
         })
         .collect();
