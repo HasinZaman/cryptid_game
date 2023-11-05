@@ -8,10 +8,11 @@ use bevy::{
     reflect::TypeUuid,
     utils::HashMap,
 };
-use bevy_mod_raycast::{
-    system_param::{Raycast, RaycastSettings, RaycastVisibility},
-    Ray3d,
-};
+use bevy_mod_raycast::{prelude::{Raycast, RaycastSettings, RaycastVisibility}, primitives::Ray3d, DefaultRaycastingPlugin};
+// use bevy_mod_raycast::{
+//     system_param::{Raycast, RaycastSettings, RaycastVisibility},
+//     Ray3d, DefaultRaycastingPlugin,
+// };
 
 use crate::player::Controllable;
 
@@ -81,6 +82,7 @@ pub fn show_seen_props<M: TypeUuid + Asset + Material>(
             .insert(material.add(prop.material.clone()));
     }
 }
+
 pub fn update_prop_visibility(
     mut commands: Commands,
 
@@ -153,6 +155,7 @@ pub fn update_prop_visibility(
         }
     }
 }
+
 
 //create macro to add prop
 macro_rules! prop_visibility_system {

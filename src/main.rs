@@ -1,6 +1,7 @@
 // use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy_mod_raycast::prelude::low_latency_window_plugin;
+use bevy_mod_raycast::DefaultRaycastingPlugin;
+use bevy_mod_raycast::prelude::DeferredRaycastingPlugin;
 // use bevy::diagnostic::*;
 use humanoid::HumanoidPlugin;
 use lightning::LightningPlugin;
@@ -19,7 +20,10 @@ pub mod standard_material;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(low_latency_window_plugin()),
+            DefaultPlugins.set(bevy_mod_raycast::low_latency_window_plugin()),
+            DefaultRaycastingPlugin
+        ))
+        .add_plugins((
             //DefaultPlugins,
             WorldPlugin,
             PlayerPlugin,

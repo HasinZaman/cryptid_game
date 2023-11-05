@@ -671,9 +671,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_raycast"
-version = "0.14.1"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75e5d9c1d97ce48b74078ff9261b4d7df3986c8f79ae48f71ab92885ecb8f04a"
+checksum = "b833e94bd71d2ef27445f3e146b07da4a7922fdb7b464f0f1221521f85a5725a"
 dependencies = [
  "bevy",
  "crossbeam-channel",

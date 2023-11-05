@@ -16,8 +16,7 @@ use bevy::{
     window::CursorMoved,
 };
 use bevy_mod_raycast::{
-    DefaultRaycastingPlugin, IntersectionData, RaycastMethod, RaycastPluginState, RaycastSource,
-    RaycastSystem,
+    primitives::IntersectionData, prelude::{RaycastSource, RaycastMethod, RaycastPluginState, RaycastSystem, DeferredRaycastingPlugin}
 };
 
 use crate::{
@@ -488,7 +487,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(DefaultRaycastingPlugin::<PlayerTargetSet>::default())
+        app.add_plugins(DeferredRaycastingPlugin::<PlayerTargetSet>::default())
+            
             .add_systems(
                 First,
                 update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
