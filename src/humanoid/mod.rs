@@ -284,7 +284,8 @@ pub fn load_humanoid(
     let skins: Vec<SkinnedMesh> = gltf
         .skins()
         .map(|skin| {
-            let joints: Vec<Entity> = skin.joints()
+            let joints: Vec<Entity> = skin
+                .joints()
                 .map(|node| {
                     commands
                         .entity(entities[node.index()].0)
@@ -296,11 +297,12 @@ pub fn load_humanoid(
                 })
                 .collect();
 
-            let inverse_bind_matrices = SkinnedMeshInverseBindposes::from(
-                match skin.inverse_bind_matrices() {
+            let inverse_bind_matrices =
+                SkinnedMeshInverseBindposes::from(match skin.inverse_bind_matrices() {
                     Some(accessor) => {
-                        let get_buffer_data = |buffer: gltf::Buffer| buffers.get(buffer.index()).map(|x| &*x.0);
-    
+                        let get_buffer_data =
+                            |buffer: gltf::Buffer| buffers.get(buffer.index()).map(|x| &*x.0);
+
                         gltf::accessor::Iter::<[[f32; 4]; 4]>::new(accessor, get_buffer_data)
                             .unwrap()
                             .map(|matrix| {
@@ -311,13 +313,12 @@ pub fn load_humanoid(
                                     matrix[3].into(),
                                 )
                             })
-                            .collect::<Vec<Mat4>>()   
+                            .collect::<Vec<Mat4>>()
                     }
                     None => (0..joints.len())
                         .map(|_| Mat4::IDENTITY)
                         .collect::<Vec<Mat4>>(),
-                }
-            );
+                });
 
             SkinnedMesh {
                 inverse_bindposes: inverse_bindposes.add(inverse_bind_matrices),
@@ -328,12 +329,7 @@ pub fn load_humanoid(
 
     let mut queue: VecDeque<usize> = VecDeque::new();
 
-    let start_index = gltf
-        .scenes()
-        .next()?
-        .nodes()
-        .next()?
-        .index();
+    let start_index = gltf.scenes().next()?.nodes().next()?.index();
 
     queue.push_back(start_index);
 
