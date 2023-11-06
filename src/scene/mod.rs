@@ -14,7 +14,10 @@ use crate::player::PlayerTargetSet;
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
 use self::prop::materials::plastic::PlasticMaterial;
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
-use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, Props, PropVisibilitySource};
+use self::prop::{
+    PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget,
+    Props,
+};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
 
@@ -376,12 +379,17 @@ fn create_scene(
                         z: -5.,
                     },
                     scale: Vec3::new(3., 3., 3.),
-                    ..default()
+                    rotation: Quat::from_rotation_y(0.5)
                 }),
             ),
             plastic_props.0.get("plastic_bin_1").unwrap().clone(),
             PropVisibility::Hidden,
-            PropVisibilitySource(vec![Vec3::ZERO]),
+            PropVisibilityTarget::from(vec![
+                Vec3::new(0.051597, 0.046506, 0.031542),
+                Vec3::new(0.051597, 0.046506, 0.468458),
+                Vec3::new(1.0584, 0.046506, 0.031542),
+                Vec3::new(1.0584, 0.046506, 0.468458),
+            ]),
             RaycastMesh::<PlayerTargetSet>::default(),
         ));
     }

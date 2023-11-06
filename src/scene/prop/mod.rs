@@ -1,20 +1,17 @@
 use bevy::{
     asset::Asset,
     prelude::{
-        default, App, AssetServer, Assets, Color, Commands, Component, Entity, Handle, Material,
-        MaterialMeshBundle, Mesh, Plugin, PreStartup, Query, ResMut, Resource, Startup, Transform,
-        Update, Vec3, With,
+        default, App, AssetServer, Assets, Color, Commands, Component, Entity, Gizmos,
+        GlobalTransform, Handle, Material, MaterialMeshBundle, Mesh, Plugin, PreStartup, Query,
+        ResMut, Resource, Startup, Transform, Update, Vec3, With, Quat,
     },
     reflect::TypeUuid,
     utils::HashMap,
 };
-use bevy_mod_raycast::{prelude::{Raycast, RaycastSettings, RaycastVisibility}, primitives::Ray3d, DefaultRaycastingPlugin};
-// use bevy_mod_raycast::{
-//     system_param::{Raycast, RaycastSettings, RaycastVisibility},
-//     Ray3d, DefaultRaycastingPlugin,
-// };
-
-use crate::player::Controllable;
+use bevy_mod_raycast::{
+    prelude::{Raycast, RaycastSettings, RaycastVisibility},
+    primitives::Ray3d,
+};
 
 use self::materials::{plastic::PlasticMaterial, MaterialsPlugin};
 
@@ -26,18 +23,28 @@ pub mod sound_source;
 #[derive(Component)]
 pub struct PropVisibilityBlocker;
 #[derive(Component)]
-pub struct PropVisibilityGoal;
+pub struct PropVisibilitySource;
 #[derive(Component)]
-pub struct PropVisibilitySource(pub Vec<Vec3>);
+pub struct PropVisibilityTarget(pub Vec<Vec3>);
 
-impl From<Vec3> for PropVisibilitySource {
+impl From<Vec3> for PropVisibilityTarget {
     fn from(value: Vec3) -> Self {
-        PropVisibilitySource(vec![value])
+        PropVisibilityTarget(vec![value])
     }
 }
-impl From<Transform> for PropVisibilitySource {
-    fn from(_value: Transform) -> Self {
-        PropVisibilitySource(vec![Vec3::ZERO])
+impl From<Vec<Vec3>> for PropVisibilityTarget {
+    fn from(value: Vec<Vec3>) -> Self {
+        PropVisibilityTarget(value)
+    }
+}
+impl From<&Transform> for PropVisibilityTarget {
+    fn from(value: &Transform) -> Self {
+        PropVisibilityTarget(vec![value.translation])
+    }
+}
+impl Default for PropVisibilityTarget {
+    fn default() -> Self {
+        Self(vec![Vec3::ZERO])
     }
 }
 
@@ -86,76 +93,82 @@ pub fn show_seen_props<M: TypeUuid + Asset + Material>(
 pub fn update_prop_visibility(
     mut commands: Commands,
 
-    //get player position (could be merged with target_query)
-    player_query: Query<&Transform, With<Controllable>>,
+    source_query: Query<&GlobalTransform, With<PropVisibilitySource>>,
 
-    //get targets
-    target_query: Query<Entity, (With<PropVisibilityGoal>, With<Handle<Mesh>>)>,
-    blocker_query: Query<Entity, (With<PropVisibilityBlocker>, With<Handle<Mesh>>)>,
+    mut prop_query: Query<
+        (
+            Entity,
+            &GlobalTransform,
+            Option<&ForgettableProp>,
+            &mut PropVisibility,
+        ),
+        (With<Handle<Mesh>>, With<PropVisibilityTarget>),
+    >,
+    target_query: Query<&PropVisibilityTarget, With<Handle<Mesh>>>,
+    blocker_query: Query<(), (With<PropVisibilityBlocker>, With<Handle<Mesh>>)>,
 
     mut ray_cast: Raycast,
 
-    mut query: Query<(
-        &Transform,
-        Option<&ForgettableProp>,
-        &mut PropVisibility,
-        &PropVisibilitySource,
-    )>,
+    mut gizmos: Gizmos,
 ) {
-    let Some(player_transform) = player_query.iter().next() else {
-        return;
-    };
+    for source in &source_query {
+        let origin = source.translation();
+        for target in &mut prop_query {
+            let (target, target_transform, forgettable, mut visibility) = target;
 
-    for (transform, forgettable, mut visibility, source) in &mut query {
-        for origin in source.0.iter() {
-            let origin = Vec3::new(
-                origin.x * transform.scale.x + transform.translation.x,
-                origin.x * transform.scale.x + transform.translation.x,
-                origin.x * transform.scale.x + transform.translation.x,
-            );
+            let source = target_query.get(target).unwrap();
 
-            let direction = (player_transform.translation - origin).normalize();
+            for target_pos in source.0.iter() {
+                let target_pos = {
+                    let mut pos = *target_pos;
+                    pos.z *= -1.;
 
-            let ray = Ray3d::new(origin, direction);
+                    target_transform.compute_matrix().project_point3(pos)
+                };
 
-            let cast = ray_cast.cast_ray(
-                ray,
-                &RaycastSettings {
+                gizmos.sphere(target_pos, Quat::IDENTITY, 0.05, Color::RED);
+
+                let direction = (target_pos - origin).normalize();
+
+                let ray = Ray3d::new(origin, direction);
+                let settings = RaycastSettings {
                     visibility: RaycastVisibility::MustBeVisible,
                     filter: &|entity: Entity| {
                         target_query.contains(entity) || blocker_query.contains(entity)
                     },
                     early_exit_test: &|_| true,
-                },
-            );
+                };
+                ray_cast.debug_cast_ray(ray, &settings, &mut gizmos);
 
-            let Some((entity, _)) = cast.iter().next() else {
-                continue;
-            };
-            {
-                let visibility = visibility.as_mut();
-                match (target_query.contains(*entity), &visibility, forgettable) {
-                    (false, PropVisibility::Seen, None)
-                    | (false, PropVisibility::Hidden, _)
-                    | (true, PropVisibility::Seen, _) => {}
+                let cast = ray_cast.cast_ray(ray, &settings);
 
-                    (true, PropVisibility::Hidden, None) => {
-                        *visibility = PropVisibility::Seen;
-                    }
-                    (true, PropVisibility::Hidden, Some(_)) => {
-                        commands.entity(*entity).remove::<ForgettableProp>();
-                        *visibility = PropVisibility::Seen;
-                    }
+                let Some((entity, _)) = cast.iter().next() else {
+                    continue;
+                };
+                {
+                    let visibility = visibility.as_mut();
+                    match (target_query.contains(*entity), &visibility, forgettable) {
+                        (false, PropVisibility::Seen, None)
+                        | (false, PropVisibility::Hidden, _)
+                        | (true, PropVisibility::Seen, _) => {}
 
-                    (false, PropVisibility::Seen, Some(_)) => {
-                        *visibility = PropVisibility::Hidden;
+                        (true, PropVisibility::Hidden, None) => {
+                            *visibility = PropVisibility::Seen;
+                        }
+                        (true, PropVisibility::Hidden, Some(_)) => {
+                            commands.entity(*entity).remove::<ForgettableProp>();
+                            *visibility = PropVisibility::Seen;
+                        }
+
+                        (false, PropVisibility::Seen, Some(_)) => {
+                            *visibility = PropVisibility::Hidden;
+                        }
                     }
                 }
             }
         }
     }
 }
-
 
 //create macro to add prop
 macro_rules! prop_visibility_system {

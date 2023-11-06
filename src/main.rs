@@ -1,7 +1,7 @@
 // use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy_mod_raycast::DefaultRaycastingPlugin;
 use bevy_mod_raycast::prelude::DeferredRaycastingPlugin;
+use bevy_mod_raycast::DefaultRaycastingPlugin;
 // use bevy::diagnostic::*;
 use humanoid::HumanoidPlugin;
 use lightning::LightningPlugin;
@@ -21,7 +21,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins.set(bevy_mod_raycast::low_latency_window_plugin()),
-            DefaultRaycastingPlugin
+            DefaultRaycastingPlugin,
         ))
         .add_plugins((
             //DefaultPlugins,

@@ -16,12 +16,15 @@ use bevy::{
     window::CursorMoved,
 };
 use bevy_mod_raycast::{
-    primitives::IntersectionData, prelude::{RaycastSource, RaycastMethod, RaycastPluginState, RaycastSystem, DeferredRaycastingPlugin}
+    prelude::{
+        DeferredRaycastingPlugin, RaycastMethod, RaycastPluginState, RaycastSource, RaycastSystem,
+    },
+    primitives::IntersectionData,
 };
 
 use crate::{
     humanoid::load_humanoid,
-    scene::prop::{sound_source::SoundSource, PropVisibilityGoal},
+    scene::prop::{sound_source::SoundSource, PropVisibilitySource, PropVisibilityTarget},
 };
 
 pub const EAR_GAP: f32 = 0.25;
@@ -307,9 +310,7 @@ fn create_player(
     )
     .unwrap();
 
-    commands
-        .entity(player)
-        .insert((Controllable,));
+    commands.entity(player).insert((Controllable,));
 
     //followable camera
     let camera_and_light_transform = Transform::from_xyz(0., 0., 10.).looking_to(
@@ -350,10 +351,11 @@ fn create_player(
                 r: 50.,
             },
         })),
-        RaycastSource::<PlayerTargetSet>::new()
+        RaycastSource::<PlayerTargetSet>::new(),
     ));
-    commands.entity(*humanoid.meshes.get("man").unwrap())
-        .insert((PropVisibilityGoal,));
+    commands
+        .entity(*humanoid.meshes.get("Hat").unwrap())
+        .insert((PropVisibilitySource,));
 
     commands.spawn((
         SpotLightBundle {
@@ -488,7 +490,6 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(DeferredRaycastingPlugin::<PlayerTargetSet>::default())
-            
             .add_systems(
                 First,
                 update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
