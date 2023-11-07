@@ -1,6 +1,5 @@
 // use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy_mod_raycast::prelude::DeferredRaycastingPlugin;
 use bevy_mod_raycast::DefaultRaycastingPlugin;
 // use bevy::diagnostic::*;
 use humanoid::HumanoidPlugin;
