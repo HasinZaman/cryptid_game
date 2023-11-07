@@ -2,8 +2,8 @@ use bevy::{
     asset::Asset,
     prelude::{
         default, App, AssetServer, Assets, Color, Commands, Component, Entity, Gizmos,
-        GlobalTransform, Handle, Material, MaterialMeshBundle, Mesh, Plugin, PreStartup, Query,
-        ResMut, Resource, Startup, Transform, Update, Vec3, With, Quat,
+        GlobalTransform, Handle, Material, MaterialMeshBundle, Mesh, Plugin, PreStartup, Quat,
+        Query, ResMut, Resource, Startup, Transform, Update, Vec3, With,
     },
     reflect::TypeUuid,
     utils::HashMap,
@@ -23,7 +23,29 @@ pub mod sound_source;
 #[derive(Component)]
 pub struct PropVisibilityBlocker;
 #[derive(Component)]
-pub struct PropVisibilitySource;
+pub struct PropVisibilitySource(f32);
+
+impl PropVisibilitySource {
+    pub fn from_angle(angle: f32) -> Self {
+        Self(f32::cos(angle))
+    }
+    pub fn from_cos(cos: f32) -> Self {
+        Self(cos)
+    }
+}
+
+impl From<f32> for PropVisibilitySource {
+    fn from(value: f32) -> Self {
+        PropVisibilitySource::from_cos(value)
+    }
+}
+
+impl Default for PropVisibilitySource {
+    fn default() -> Self {
+        Self(0.25)
+    }
+}
+
 #[derive(Component)]
 pub struct PropVisibilityTarget(pub Vec<Vec3>);
 
@@ -93,7 +115,7 @@ pub fn show_seen_props<M: TypeUuid + Asset + Material>(
 pub fn update_prop_visibility(
     mut commands: Commands,
 
-    source_query: Query<&GlobalTransform, With<PropVisibilitySource>>,
+    source_query: Query<(&GlobalTransform, &PropVisibilitySource)>,
 
     mut prop_query: Query<
         (
@@ -111,14 +133,17 @@ pub fn update_prop_visibility(
 
     mut gizmos: Gizmos,
 ) {
-    for source in &source_query {
-        let origin = source.translation();
+    for (source_transform, source) in &source_query {
+        let origin = source_transform.translation();
+
+        gizmos.ray(origin, source_transform.forward(), Color::RED);
+
         for target in &mut prop_query {
             let (target, target_transform, forgettable, mut visibility) = target;
 
-            let source = target_query.get(target).unwrap();
+            let target = target_query.get(target).unwrap();
 
-            for target_pos in source.0.iter() {
+            for target_pos in target.0.iter() {
                 let target_pos = {
                     let mut pos = *target_pos;
                     pos.z *= -1.;
@@ -129,6 +154,15 @@ pub fn update_prop_visibility(
                 gizmos.sphere(target_pos, Quat::IDENTITY, 0.05, Color::RED);
 
                 let direction = (target_pos - origin).normalize();
+
+                //check if direction vector is within vision cone
+                // let in_cone = {
+                //     let mut forward = source_transform.forward();
+                //     forward.y = 0;
+                // }
+                if source_transform.forward().dot(direction) < source.0 {
+                    continue;
+                }
 
                 let ray = Ray3d::new(origin, direction);
                 let settings = RaycastSettings {

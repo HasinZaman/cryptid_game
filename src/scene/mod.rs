@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::audio::{PlaybackMode, Volume};
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
-    default, App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res,
+    App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res,
     ResMut, SpatialSettings, Startup,
 };
 use bevy::transform::components::Transform;
@@ -14,10 +14,7 @@ use crate::player::PlayerTargetSet;
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
 use self::prop::materials::plastic::PlasticMaterial;
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
-use self::prop::{
-    PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget,
-    Props,
-};
+use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget, Props, ForgettableProp};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
 
@@ -379,7 +376,7 @@ fn create_scene(
                         z: -5.,
                     },
                     scale: Vec3::new(3., 3., 3.),
-                    rotation: Quat::from_rotation_y(0.5)
+                    rotation: Quat::from_rotation_y(0.5),
                 }),
             ),
             plastic_props.0.get("plastic_bin_1").unwrap().clone(),

@@ -6,9 +6,9 @@ use bevy::{
     ecs::entity::Entity,
     prelude::{
         default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
-        EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat, Query, Res,
-        ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle, StandardMaterial, Startup,
-        Transform, Update, Vec3, With, Without,
+        EulerRot, EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat,
+        Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
+        StandardMaterial, Startup, Transform, Update, Vec3, With, Without,
     },
     reflect::Reflect,
     render::mesh::skinning::SkinnedMeshInverseBindposes,
@@ -23,8 +23,8 @@ use bevy_mod_raycast::{
 };
 
 use crate::{
-    humanoid::load_humanoid,
-    scene::prop::{sound_source::SoundSource, PropVisibilitySource, PropVisibilityTarget},
+    humanoid::{load_humanoid, Humanoid},
+    scene::prop::{sound_source::SoundSource, PropVisibilitySource},
 };
 
 pub const EAR_GAP: f32 = 0.25;
@@ -354,8 +354,8 @@ fn create_player(
         RaycastSource::<PlayerTargetSet>::new(),
     ));
     commands
-        .entity(*humanoid.meshes.get("Hat").unwrap())
-        .insert((PropVisibilitySource,));
+        .entity(humanoid.head)
+        .insert((PropVisibilitySource::from_angle(PI / 4.),));
 
     commands.spawn((
         SpotLightBundle {
@@ -394,7 +394,7 @@ fn create_player(
     // commands.spawn((..Components));
 }
 
-pub fn update_sound_sink_pos(
+fn update_sound_sink_pos(
     player_query: Query<&Transform, With<Controllable>>,
     mut sound_emitter_query: Query<(
         &mut SpatialSettings,
@@ -468,7 +468,7 @@ pub fn update_sound_level(
     }
 }
 */
-pub fn update_light_dir(
+fn update_light_dir(
     target: Res<PlayerTarget>,
     mut player_query: Query<&mut Transform, With<SpotLight>>,
 ) {
@@ -482,6 +482,80 @@ pub fn update_light_dir(
         let point = target.1.position();
 
         transform.look_at(point, Vec3::Y);
+    }
+}
+
+fn update_head_dir(
+    target: Res<PlayerTarget>,
+    player_query: Query<&Humanoid, With<Controllable>>,
+    mut bone_entity: Query<(&mut Transform, &GlobalTransform)>,
+) {
+    let PlayerTarget(Some(target)) = target.as_ref() else {
+        return;
+    };
+
+    for humanoid in &player_query {
+        let (forward, right, up) = {
+            let transform = bone_entity.get(humanoid.body).unwrap().1;
+
+            (transform.forward(), transform.right(), transform.up())
+        };
+
+        let dir = {
+            let (_, global_head_transform) = bone_entity.get(humanoid.head).unwrap();
+
+            match (target.1.position() - global_head_transform.translation()).try_normalize() {
+                Some(dir) => dir,
+                None => continue,
+            }
+        };
+
+        // let y_angle = {
+        //     let xy_dir_proj = match (dir.project_onto(forward) + dir.project_onto(right)).try_normalize() {
+        //         Some(y) => y,
+        //         None => todo!(),
+        //     };
+
+        //     forward.dot(xy_dir_proj).acos()
+        // } + PI/2.;
+        // let x_angle = up.dot(dir).acos() + PI/4.;
+
+        // println!("dir:{dir:?}\nforward:{forward:?}\nup:{up:?}");
+        // println!("x_angle:{x_angle:?}\ny_angle:{y_angle:?}");
+        {
+            let (mut head, _) = bone_entity.get_mut(humanoid.head).unwrap();
+            let head = head.as_mut();
+
+            let (mut x_rot, mut y_rot, _) = head
+                .looking_to(dir, Vec3::Y)
+                .rotation
+                .to_euler(EulerRot::XYZ);
+
+
+            y_rot = y_rot.clamp(-PI / 2., PI / 2.);
+
+            let x_const = 1. - 0.98 * (y_rot.abs() / (PI / 2.));
+
+            x_rot = x_rot.clamp(-2. * PI / 6. * x_const, 2. * PI / 6. * x_const);
+
+
+            head.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, 0.);
+
+            let (mut body, _) = bone_entity.get_mut(humanoid.body).unwrap();
+            let body = body.as_mut();
+
+            // let remaining_y = match y_rot < 0. {
+            //     true => {
+            //         todo!()
+            //     },
+            //     false => {
+            //         todo!()
+            //     }
+            // };
+            // let (x_rot, y_rot, z_rot) = body.rotation.to_euler(EulerRot::XYZ);
+            // body.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, z_rot);
+
+        }
     }
 }
 
@@ -503,6 +577,7 @@ impl Plugin for PlayerPlugin {
                     rotate_camera_view,
                     follow,
                     update_light_dir,
+                    update_head_dir,
                 ),
             )
             .add_systems(
