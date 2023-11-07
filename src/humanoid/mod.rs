@@ -5,7 +5,7 @@ use bevy::{
     prelude::{
         App, AssetServer, Assets, BuildChildren, Commands, Component, ComputedVisibility, Entity,
         GlobalTransform, Handle, Mat4, Mesh, Plugin, Quat, Query, Res, ResMut, StandardMaterial,
-        Transform, Update, Vec3, Visibility,
+        Transform, Vec3, Visibility,
     },
     render::mesh::skinning::{SkinnedMesh, SkinnedMeshInverseBindposes},
 };
@@ -362,38 +362,8 @@ pub fn load_humanoid(
     return Some((start_entity, humanoid_builder.into()));
 }
 
-fn rotate_head(mut entities: Query<&mut Transform>, query: Query<&Humanoid>) {
-    for humanoid in &query {
-        if let Ok(mut arm) = entities.get_mut(humanoid.left_arm.0) {
-            let arm = arm.as_mut();
-
-            arm.rotate_z(0.001);
-        }
-        if let Ok(mut arm) = entities.get_mut(humanoid.right_arm.0) {
-            let arm = arm.as_mut();
-
-            arm.rotate_x(0.001);
-        }
-        if let Ok(mut arm) = entities.get_mut(humanoid.head) {
-            let arm = arm.as_mut();
-
-            arm.rotate_y(0.001);
-        }
-    }
-}
-
 pub struct HumanoidPlugin;
 
 impl Plugin for HumanoidPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Update, (rotate_head,));
-        // let plastic_props = Props::<PlasticMaterial>(HashMap::new());
-
-        // app.insert_resource(plastic_props)
-        //     .add_plugins((MaterialsPlugin,))
-        //     .add_systems(Startup, setup)
-        //     .add_systems(PreStartup, load_plastic_props)
-        //     .add_systems(Update, update_prop_visibility)
-        //     .add_systems(Update, prop_visibility_system![PlasticMaterial]);
-    }
+    fn build(&self, _app: &mut App) {}
 }
