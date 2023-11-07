@@ -14,7 +14,7 @@ use crate::player::PlayerTargetSet;
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
 use self::prop::materials::plastic::PlasticMaterial;
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
-use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget, Props, ForgettableProp};
+use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget, Props};
 use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
 
