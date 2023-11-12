@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use bevy::audio::{PlaybackMode, Volume};
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
-    App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res,
-    ResMut, SpatialSettings, Startup,
+    App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res, ResMut,
+    SpatialSettings, Startup,
 };
 use bevy::transform::components::Transform;
 use bevy_mod_raycast::prelude::RaycastMesh;
@@ -67,7 +67,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             wall::into_mesh_bundle(
@@ -87,7 +87,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             wall::into_mesh_bundle(
@@ -107,7 +107,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             wall::into_mesh_bundle(
@@ -127,7 +127,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
 
         commands.spawn((
@@ -148,7 +148,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             wall::into_mesh_bundle(
@@ -168,7 +168,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             wall::into_mesh_bundle(
@@ -188,7 +188,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             wall::into_mesh_bundle(
@@ -208,7 +208,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
     }
     //floors
@@ -235,7 +235,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             floor::into_mesh_bundle(
@@ -259,7 +259,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
         commands.spawn((
             floor::into_mesh_bundle(
@@ -283,7 +283,7 @@ fn create_scene(
                     },
                 }),
             ),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
     }
     //windows
@@ -381,13 +381,14 @@ fn create_scene(
             ),
             plastic_props.0.get("plastic_bin_1").unwrap().clone(),
             PropVisibility::Hidden,
+            //prop::Forgettable,
             PropVisibilityTarget::from(vec![
                 Vec3::new(0.051597, 0.046506, 0.031542),
                 Vec3::new(0.051597, 0.046506, 0.468458),
                 Vec3::new(1.0584, 0.046506, 0.031542),
                 Vec3::new(1.0584, 0.046506, 0.468458),
             ]),
-            RaycastMesh::<PlayerTargetSet>::default(),
+            PlayerTargetSet,
         ));
     }
     // commands.spawn((
@@ -415,7 +416,7 @@ fn create_scene(
     //             },
     //         }),
     //     ),
-    //     RaycastMesh::<PlayerTargetSet>::default(),
+    //     PlayerTargetSet,
     // ));
 }
 

@@ -8,18 +8,18 @@ use bevy::{
         default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
         EulerRot, EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat,
         Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
-        StandardMaterial, Startup, Transform, Update, Vec3, With, Without,
+        StandardMaterial, Startup, Transform, Update, Vec3, With, Without, Ray,
     },
     reflect::Reflect,
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
-    window::CursorMoved,
+    window::{CursorMoved, Window, PrimaryWindow},
 };
 use bevy_mod_raycast::{
     prelude::{
-        DeferredRaycastingPlugin, RaycastMethod, RaycastPluginState, RaycastSource, RaycastSystem,
+        DeferredRaycastingPlugin, RaycastMethod, RaycastPluginState, RaycastSource, RaycastSystem, Raycast, RaycastSettings, RaycastVisibility,
     },
-    primitives::IntersectionData,
+    primitives::{IntersectionData, Ray3d},
 };
 
 use crate::{
@@ -56,12 +56,6 @@ pub struct FollowTarget {
     target: Entity,
     offset: Coord,
 }
-
-#[derive(Resource, Debug)]
-pub struct PlayerTarget(Option<(Entity, IntersectionData)>);
-
-#[derive(Reflect)]
-pub struct PlayerTargetSet;
 
 #[derive(Component)]
 pub struct Follow(Option<FollowTarget>);
@@ -265,29 +259,61 @@ fn rotate_camera_view(
     }
 }
 
+#[derive(Resource)]
+pub struct PlayerTarget(Option<(Entity, IntersectionData)>);
+
+#[derive(Component)]
+pub struct PlayerTargetSet;
+
+
 fn update_player_target(
     mut cursor: EventReader<CursorMoved>,
+
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+    
+    window: Query<&Window, With<PrimaryWindow>>,
+
+    target_set_query: Query<(), With<PlayerTargetSet>>,
     mut player_target: ResMut<PlayerTarget>,
-    mut query: Query<&mut RaycastSource<PlayerTargetSet>, With<Camera>>,
+
+    mut ray_cast: Raycast,
 ) {
-    // Grab the most recent cursor event if it exists:
-    let Some(cursor_moved) = cursor.iter().last() else {
+    let ray = {
+        let Some(cursor_moved) = cursor.iter().last() else {
+            return;
+        };
+        let Some((camera, transform)) = camera_query.iter().last() else {
+            return;
+        };
+        let Some(window) = window.iter().last() else {
+            return;
+        };
+    
+        let ray = Ray3d::from_screenspace(
+            cursor_moved.position,
+            camera,
+            transform,
+            window
+        );
+
+        match ray {
+            Some(ray) => ray,
+            None => return
+        }
+    };
+
+    let settings = RaycastSettings{
+        visibility: RaycastVisibility::MustBeVisibleAndInView,
+        filter: &|entity| target_set_query.contains(entity),
+        early_exit_test: &|_| true,
+    };
+
+    let Some(hit) = ray_cast.cast_ray(ray, &settings).iter().next() else {
         return;
     };
-    // println!("Starting ray cast");
-    for mut pick_source in &mut query {
-        pick_source.cast_method = RaycastMethod::Screenspace(cursor_moved.position);
 
-        let target: &mut PlayerTarget = player_target.as_mut();
-
-        let Some(point) = pick_source.intersections().last() else {
-            continue;
-        };
-        *target = PlayerTarget(Some(point.clone()));
-
-        // println!("{:#?}", target);
-        // println!("{:#?}", pick_source.intersections());
-    }
+    let player_target = player_target.as_mut();
+    player_target.0 = Some(hit.clone());
 }
 
 fn create_player(
@@ -351,7 +377,6 @@ fn create_player(
                 r: 50.,
             },
         })),
-        RaycastSource::<PlayerTargetSet>::new(),
     ));
     commands
         .entity(humanoid.head)
@@ -501,28 +526,52 @@ fn update_head_dir(
             (transform.forward(), transform.right(), transform.up())
         };
 
-        let dir = {
-            let (_, global_head_transform) = bone_entity.get(humanoid.head).unwrap();
-
-            match (target.1.position() - global_head_transform.translation()).try_normalize() {
-                Some(dir) => dir,
-                None => continue,
-            }
-        };
-
-        // let y_angle = {
-        //     let xy_dir_proj = match (dir.project_onto(forward) + dir.project_onto(right)).try_normalize() {
-        //         Some(y) => y,
-        //         None => todo!(),
-        //     };
-
-        //     forward.dot(xy_dir_proj).acos()
-        // } + PI/2.;
-        // let x_angle = up.dot(dir).acos() + PI/4.;
-
-        // println!("dir:{dir:?}\nforward:{forward:?}\nup:{up:?}");
-        // println!("x_angle:{x_angle:?}\ny_angle:{y_angle:?}");
+        
+        //rotate body (root)
         {
+            let dir = {
+                let (_, global_body_transform) = bone_entity.get(humanoid.body).unwrap();
+    
+                match (target.1.position() - global_body_transform.translation()).try_normalize() {
+                    Some(mut dir) => {
+                        dir.y = 0.;
+                        
+                        dir
+                    },
+                    None => continue,
+                }
+            };
+
+            println!("{dir:?}");
+            
+            let (mut body, _) = bone_entity.get_mut(humanoid.body).unwrap();
+            let body = body.as_mut();
+
+            let (x_rot, mut y_rot, z_rot) = body.rotation.to_euler(EulerRot::XYZ);
+
+            let (_, y_rot_goal, _) = body
+                .looking_at(target.1.position(), Vec3::Y)
+                .rotation
+                .to_euler(EulerRot::XYZ);
+
+            // if (body.rotation * body.forward()).dot(dir) < 0. {
+                y_rot = y_rot_goal;
+            // }
+
+            body.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, z_rot);
+        }
+
+        //rotate head
+        {
+            let dir = {
+                let (_, global_head_transform) = bone_entity.get(humanoid.head).unwrap();
+    
+                match (target.1.position() - global_head_transform.translation()).try_normalize() {
+                    Some(dir) => dir,
+                    None => continue,
+                }
+            };
+
             let (mut head, _) = bone_entity.get_mut(humanoid.head).unwrap();
             let head = head.as_mut();
 
@@ -531,30 +580,13 @@ fn update_head_dir(
                 .rotation
                 .to_euler(EulerRot::XYZ);
 
-
             y_rot = y_rot.clamp(-PI / 2., PI / 2.);
 
             let x_const = 1. - 0.98 * (y_rot.abs() / (PI / 2.));
 
             x_rot = x_rot.clamp(-2. * PI / 6. * x_const, 2. * PI / 6. * x_const);
 
-
             head.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, 0.);
-
-            let (mut body, _) = bone_entity.get_mut(humanoid.body).unwrap();
-            let body = body.as_mut();
-
-            // let remaining_y = match y_rot < 0. {
-            //     true => {
-            //         todo!()
-            //     },
-            //     false => {
-            //         todo!()
-            //     }
-            // };
-            // let (x_rot, y_rot, z_rot) = body.rotation.to_euler(EulerRot::XYZ);
-            // body.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, z_rot);
-
         }
     }
 }
@@ -563,8 +595,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(DeferredRaycastingPlugin::<PlayerTargetSet>::default())
-            .add_systems(
+        app.add_systems(
                 First,
                 update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
             )
