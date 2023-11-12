@@ -7,19 +7,15 @@ use bevy::{
     prelude::{
         default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
         EulerRot, EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat,
-        Query, Ray, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
+        Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
         StandardMaterial, Startup, Transform, Update, Vec3, With, Without,
     },
-    reflect::Reflect,
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
     window::{CursorMoved, PrimaryWindow, Window},
 };
 use bevy_mod_raycast::{
-    prelude::{
-        DeferredRaycastingPlugin, Raycast, RaycastMethod, RaycastPluginState, RaycastSettings,
-        RaycastSource, RaycastSystem, RaycastVisibility,
-    },
+    prelude::{Raycast, RaycastPluginState, RaycastSettings, RaycastSystem, RaycastVisibility},
     primitives::{IntersectionData, Ray3d},
 };
 

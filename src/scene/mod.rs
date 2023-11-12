@@ -7,7 +7,6 @@ use bevy::prelude::{
     SpatialSettings, Startup,
 };
 use bevy::transform::components::Transform;
-use bevy_mod_raycast::prelude::RaycastMesh;
 
 use crate::player::PlayerTargetSet;
 
