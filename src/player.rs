@@ -8,11 +8,11 @@ use bevy::{
         default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
         EulerRot, EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat,
         Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
-        StandardMaterial, Startup, Transform, Update, Vec3, With, Without,
+        StandardMaterial, Startup, Transform, Update, Vec3, With, Without, Gizmos,
     },
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
-    window::{CursorMoved, PrimaryWindow, Window},
+    window::{CursorMoved, PrimaryWindow, Window}, transform,
 };
 use bevy_mod_raycast::{
     prelude::{Raycast, RaycastPluginState, RaycastSettings, RaycastSystem, RaycastVisibility},
@@ -500,84 +500,107 @@ fn update_light_dir(
         transform.look_at(point, Vec3::Y);
     }
 }
+fn update_body_dir(
+    time: Res<Time>,
 
-fn update_head_dir(
     target: Res<PlayerTarget>,
     player_query: Query<&Humanoid, With<Controllable>>,
-    mut bone_entity: Query<(&mut Transform, &GlobalTransform)>,
+    mut bone_entities: Query<(&mut Transform, &GlobalTransform)>,
+
+    mut gizmos: Gizmos,
 ) {
     let PlayerTarget(Some(target)) = target.as_ref() else {
         return;
     };
 
     for humanoid in &player_query {
-        let (forward, right, up) = {
-            let transform = bone_entity.get(humanoid.body).unwrap().1;
+        let (mut transform, global_transform) = bone_entities.get_mut(humanoid.body).unwrap();
+        let transform = transform.as_mut();
 
-            (transform.forward(), transform.right(), transform.up())
+        let dir = {
+            let mut dir = match (target.1.position() - global_transform.translation()).try_normalize() {
+                Some(dir) => dir,
+                None => continue,
+            };
+
+            dir.y = 0.;//can be used to lean back or forward
+
+            dir
         };
 
-        //rotate body (root)
+        let goal = transform.looking_to(dir, Vec3::Y)
+                .rotation;
+
+        let target_angle = Quat::angle_between(transform.rotation, goal);
+
         {
-            let dir = {
-                let (_, global_body_transform) = bone_entity.get(humanoid.body).unwrap();
-
-                match (target.1.position() - global_body_transform.translation()).try_normalize() {
-                    Some(mut dir) => {
-                        dir.y = 0.;
-
-                        dir
-                    }
-                    None => continue,
-                }
-            };
-
-            println!("{dir:?}");
-
-            let (mut body, _) = bone_entity.get_mut(humanoid.body).unwrap();
-            let body = body.as_mut();
-
-            let (x_rot, mut y_rot, z_rot) = body.rotation.to_euler(EulerRot::XYZ);
-
-            let (_, y_rot_goal, _) = body
-                .looking_at(target.1.position(), Vec3::Y)
-                .rotation
-                .to_euler(EulerRot::XYZ);
-
-            // if (body.rotation * body.forward()).dot(dir) < 0. {
-            y_rot = y_rot_goal;
-            // }
-
-            body.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, z_rot);
+            gizmos.sphere(
+                global_transform.translation(),
+                Quat::default(),
+                0.01,
+                Color::RED
+            );
+            gizmos.ray(
+                global_transform.translation(),
+                dir,
+                Color::RED
+            );
         }
 
+        //should beable to change based on state
+        // -> default
+        // -> actively aim (gun)
+        // -> kinematic restriction
+        const MIN_ANGLE: f32 = PI/4.;
+
+        if target_angle.abs() < MIN_ANGLE {
+            continue;
+        }
+
+        const ROT_SPEED: f32 = 5.;
+
+        transform.rotation = transform.rotation.slerp(
+            goal,
+            (*time).delta().as_secs_f32() * ROT_SPEED
+        );
+    }
+}
+fn update_head_dir(
+    target: Res<PlayerTarget>,
+    player_query: Query<&Humanoid, With<Controllable>>,
+    mut bone_entities: Query<(&mut Transform, &GlobalTransform)>,
+) {
+    let PlayerTarget(Some(target)) = target.as_ref() else {
+        return;
+    };
+
+    for humanoid in &player_query {
         //rotate head
-        {
-            let dir = {
-                let (_, global_head_transform) = bone_entity.get(humanoid.head).unwrap();
+        let dir = {
+            let (_, global_head_transform) = bone_entities.get(humanoid.head).unwrap();
 
-                match (target.1.position() - global_head_transform.translation()).try_normalize() {
-                    Some(dir) => dir,
-                    None => continue,
-                }
-            };
+            match (target.1.position() - global_head_transform.translation()).try_normalize() {
+                Some(dir) => dir,
+                None => continue,
+            }
+        };
 
-            let (mut head, _) = bone_entity.get_mut(humanoid.head).unwrap();
-            let head = head.as_mut();
+        let (mut head, _) = bone_entities.get_mut(humanoid.head).unwrap();
+        let head = head.as_mut();
 
-            let (mut x_rot, mut y_rot, _) = head
-                .looking_to(dir, Vec3::Y)
-                .rotation
-                .to_euler(EulerRot::XYZ);
+        let (mut x_rot, mut y_rot, _) = head
+            .looking_to(dir, Vec3::Y)
+            .rotation
+            .to_euler(EulerRot::XYZ);
 
-            y_rot = y_rot.clamp(-PI / 2., PI / 2.);
+        y_rot = y_rot.clamp(-PI / 2., PI / 2.);
 
-            let x_const = 1. - 0.98 * (y_rot.abs() / (PI / 2.));
+        let x_const = 1. - 0.98 * (y_rot.abs() / (PI / 2.));
 
-            x_rot = x_rot.clamp(-2. * PI / 6. * x_const, 2. * PI / 6. * x_const);
+        x_rot = x_rot.clamp(-2. * PI / 6. * x_const, 2. * PI / 6. * x_const);
 
-            head.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, 0.);
-        }
+        head.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, 0.);
+    
     }
 }
 
@@ -599,6 +622,7 @@ impl Plugin for PlayerPlugin {
                 follow,
                 update_light_dir,
                 update_head_dir,
+                update_body_dir,
             ),
         )
         .add_systems(
