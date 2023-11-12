@@ -1,9 +1,9 @@
 use bevy::{
     asset::Asset,
     prelude::{
-        default, App, AssetServer, Assets, Color, Commands, Component, Entity, Gizmos,
-        GlobalTransform, Handle, Material, MaterialMeshBundle, Mesh, Plugin, PreStartup, Quat,
-        Query, ResMut, Resource, Startup, Transform, Update, Vec3, With,
+        default, App, AssetServer, Assets, Color, Commands, Component, Entity, GlobalTransform,
+        Handle, Material, MaterialMeshBundle, Mesh, Plugin, PreStartup, Query, ResMut, Resource,
+        Startup, Transform, Update, Vec3, With,
     },
     reflect::TypeUuid,
     utils::HashMap,
@@ -70,22 +70,22 @@ impl Default for PropVisibilityTarget {
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, PartialEq, Eq)]
 pub enum PropVisibility {
     Seen,
     Hidden,
 }
 
 #[derive(Component)]
-pub struct ForgettableProp;
+pub struct Forgettable;
 
 pub fn hide_unseen_props<M: TypeUuid + Asset + Material>(
     mut commands: Commands,
-    query: Query<(Entity, &Prop<M>, &PropVisibility), With<Handle<M>>>,
+    query: Query<(Entity, &PropVisibility), (With<Handle<M>>, With<Prop<M>>)>,
     mut shadow_caster_material: ResMut<Assets<ShadowCasterMaterial>>,
 ) {
-    for (entity, _prop, visibility) in &query {
-        if let PropVisibility::Seen = visibility {
+    for (entity, visibility) in &query {
+        if PropVisibility::Seen == *visibility {
             continue;
         };
 
@@ -101,7 +101,7 @@ pub fn show_seen_props<M: TypeUuid + Asset + Material>(
     mut material: ResMut<Assets<M>>,
 ) {
     for (entity, prop, visibility) in &query {
-        if let PropVisibility::Hidden = visibility {
+        if PropVisibility::Hidden == *visibility {
             continue;
         };
 
@@ -113,15 +113,13 @@ pub fn show_seen_props<M: TypeUuid + Asset + Material>(
 }
 
 pub fn update_prop_visibility(
-    mut commands: Commands,
-
     source_query: Query<(&GlobalTransform, &PropVisibilitySource)>,
 
     mut prop_query: Query<
         (
             Entity,
             &GlobalTransform,
-            Option<&ForgettableProp>,
+            Option<&Forgettable>,
             &mut PropVisibility,
         ),
         (With<Handle<Mesh>>, With<PropVisibilityTarget>),
@@ -130,20 +128,19 @@ pub fn update_prop_visibility(
     blocker_query: Query<(), (With<PropVisibilityBlocker>, With<Handle<Mesh>>)>,
 
     mut ray_cast: Raycast,
-
-    mut gizmos: Gizmos,
+    // mut gizmos: Gizmos,
 ) {
     for (source_transform, source) in &source_query {
         let origin = source_transform.translation();
 
-        gizmos.ray(origin, source_transform.forward(), Color::RED);
+        // gizmos.ray(origin, source_transform.forward(), Color::RED);
 
         for target in &mut prop_query {
             let (target, target_transform, forgettable, mut visibility) = target;
 
             let target = target_query.get(target).unwrap();
 
-            for target_pos in target.0.iter() {
+            'pos_loop: for target_pos in target.0.iter() {
                 let target_pos = {
                     let mut pos = *target_pos;
                     pos.z *= -1.;
@@ -151,15 +148,10 @@ pub fn update_prop_visibility(
                     target_transform.compute_matrix().project_point3(pos)
                 };
 
-                gizmos.sphere(target_pos, Quat::IDENTITY, 0.05, Color::RED);
+                // gizmos.sphere(target_pos, Quat::IDENTITY, 0.05, Color::RED);
 
                 let direction = (target_pos - origin).normalize();
 
-                //check if direction vector is within vision cone
-                // let in_cone = {
-                //     let mut forward = source_transform.forward();
-                //     forward.y = 0;
-                // }
                 if source_transform.forward().dot(direction) < source.0 {
                     continue;
                 }
@@ -172,11 +164,11 @@ pub fn update_prop_visibility(
                     },
                     early_exit_test: &|_| true,
                 };
-                ray_cast.debug_cast_ray(ray, &settings, &mut gizmos);
+                // ray_cast.debug_cast_ray(ray, &settings, &mut gizmos);
 
-                let cast = ray_cast.cast_ray(ray, &settings);
+                let ray_hits = ray_cast.cast_ray(ray, &settings);
 
-                let Some((entity, _)) = cast.iter().next() else {
+                let Some((entity, _)) = ray_hits.iter().next() else {
                     continue;
                 };
                 {
@@ -186,12 +178,9 @@ pub fn update_prop_visibility(
                         | (false, PropVisibility::Hidden, _)
                         | (true, PropVisibility::Seen, _) => {}
 
-                        (true, PropVisibility::Hidden, None) => {
+                        (true, PropVisibility::Hidden, _) => {
                             *visibility = PropVisibility::Seen;
-                        }
-                        (true, PropVisibility::Hidden, Some(_)) => {
-                            commands.entity(*entity).remove::<ForgettableProp>();
-                            *visibility = PropVisibility::Seen;
+                            break 'pos_loop;
                         }
 
                         (false, PropVisibility::Seen, Some(_)) => {
