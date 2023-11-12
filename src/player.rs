@@ -6,13 +6,14 @@ use bevy::{
     ecs::entity::Entity,
     prelude::{
         default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
-        EulerRot, EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat,
-        Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
-        StandardMaterial, Startup, Transform, Update, Vec3, With, Without, Gizmos,
+        EulerRot, EventReader, First, Gizmos, GlobalTransform, Input, IntoSystemConfigs, KeyCode,
+        Quat, Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
+        StandardMaterial, Startup, Transform, Update, Vec3, With, Without,
     },
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
-    window::{CursorMoved, PrimaryWindow, Window}, transform,
+    transform,
+    window::{CursorMoved, PrimaryWindow, Window},
 };
 use bevy_mod_raycast::{
     prelude::{Raycast, RaycastPluginState, RaycastSettings, RaycastSystem, RaycastVisibility},
@@ -518,18 +519,18 @@ fn update_body_dir(
         let transform = transform.as_mut();
 
         let dir = {
-            let mut dir = match (target.1.position() - global_transform.translation()).try_normalize() {
-                Some(dir) => dir,
-                None => continue,
-            };
+            let mut dir =
+                match (target.1.position() - global_transform.translation()).try_normalize() {
+                    Some(dir) => dir,
+                    None => continue,
+                };
 
-            dir.y = 0.;//can be used to lean back or forward
+            dir.y = 0.; //can be used to lean back or forward
 
             dir
         };
 
-        let goal = transform.looking_to(dir, Vec3::Y)
-                .rotation;
+        let goal = transform.looking_to(dir, Vec3::Y).rotation;
 
         let target_angle = Quat::angle_between(transform.rotation, goal);
 
@@ -538,20 +539,16 @@ fn update_body_dir(
                 global_transform.translation(),
                 Quat::default(),
                 0.01,
-                Color::RED
+                Color::RED,
             );
-            gizmos.ray(
-                global_transform.translation(),
-                dir,
-                Color::RED
-            );
+            gizmos.ray(global_transform.translation(), dir, Color::RED);
         }
 
         //should beable to change based on state
         // -> default
         // -> actively aim (gun)
         // -> kinematic restriction
-        const MIN_ANGLE: f32 = PI/4.;
+        const MIN_ANGLE: f32 = PI / 4.;
 
         if target_angle.abs() < MIN_ANGLE {
             continue;
@@ -559,10 +556,9 @@ fn update_body_dir(
 
         const ROT_SPEED: f32 = 5.;
 
-        transform.rotation = transform.rotation.slerp(
-            goal,
-            (*time).delta().as_secs_f32() * ROT_SPEED
-        );
+        transform.rotation = transform
+            .rotation
+            .slerp(goal, (*time).delta().as_secs_f32() * ROT_SPEED);
     }
 }
 fn update_head_dir(
@@ -600,7 +596,6 @@ fn update_head_dir(
         x_rot = x_rot.clamp(-2. * PI / 6. * x_const, 2. * PI / 6. * x_const);
 
         head.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, 0.);
-    
     }
 }
 
