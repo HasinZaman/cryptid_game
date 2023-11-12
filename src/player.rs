@@ -7,17 +7,18 @@ use bevy::{
     prelude::{
         default, AssetServer, Assets, Camera, Camera3d, Camera3dBundle, Color, Commands, Component,
         EulerRot, EventReader, First, GlobalTransform, Input, IntoSystemConfigs, KeyCode, Quat,
-        Query, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
-        StandardMaterial, Startup, Transform, Update, Vec3, With, Without, Ray,
+        Query, Ray, Res, ResMut, Resource, SpatialSettings, SpotLight, SpotLightBundle,
+        StandardMaterial, Startup, Transform, Update, Vec3, With, Without,
     },
     reflect::Reflect,
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
-    window::{CursorMoved, Window, PrimaryWindow},
+    window::{CursorMoved, PrimaryWindow, Window},
 };
 use bevy_mod_raycast::{
     prelude::{
-        DeferredRaycastingPlugin, RaycastMethod, RaycastPluginState, RaycastSource, RaycastSystem, Raycast, RaycastSettings, RaycastVisibility,
+        DeferredRaycastingPlugin, Raycast, RaycastMethod, RaycastPluginState, RaycastSettings,
+        RaycastSource, RaycastSystem, RaycastVisibility,
     },
     primitives::{IntersectionData, Ray3d},
 };
@@ -265,12 +266,11 @@ pub struct PlayerTarget(Option<(Entity, IntersectionData)>);
 #[derive(Component)]
 pub struct PlayerTargetSet;
 
-
 fn update_player_target(
     mut cursor: EventReader<CursorMoved>,
 
     camera_query: Query<(&Camera, &GlobalTransform)>,
-    
+
     window: Query<&Window, With<PrimaryWindow>>,
 
     target_set_query: Query<(), With<PlayerTargetSet>>,
@@ -288,21 +288,16 @@ fn update_player_target(
         let Some(window) = window.iter().last() else {
             return;
         };
-    
-        let ray = Ray3d::from_screenspace(
-            cursor_moved.position,
-            camera,
-            transform,
-            window
-        );
+
+        let ray = Ray3d::from_screenspace(cursor_moved.position, camera, transform, window);
 
         match ray {
             Some(ray) => ray,
-            None => return
+            None => return,
         }
     };
 
-    let settings = RaycastSettings{
+    let settings = RaycastSettings {
         visibility: RaycastVisibility::MustBeVisibleAndInView,
         filter: &|entity| target_set_query.contains(entity),
         early_exit_test: &|_| true,
@@ -526,24 +521,23 @@ fn update_head_dir(
             (transform.forward(), transform.right(), transform.up())
         };
 
-        
         //rotate body (root)
         {
             let dir = {
                 let (_, global_body_transform) = bone_entity.get(humanoid.body).unwrap();
-    
+
                 match (target.1.position() - global_body_transform.translation()).try_normalize() {
                     Some(mut dir) => {
                         dir.y = 0.;
-                        
+
                         dir
-                    },
+                    }
                     None => continue,
                 }
             };
 
             println!("{dir:?}");
-            
+
             let (mut body, _) = bone_entity.get_mut(humanoid.body).unwrap();
             let body = body.as_mut();
 
@@ -555,7 +549,7 @@ fn update_head_dir(
                 .to_euler(EulerRot::XYZ);
 
             // if (body.rotation * body.forward()).dot(dir) < 0. {
-                y_rot = y_rot_goal;
+            y_rot = y_rot_goal;
             // }
 
             body.rotation = Quat::from_euler(EulerRot::XYZ, x_rot, y_rot, z_rot);
@@ -565,7 +559,7 @@ fn update_head_dir(
         {
             let dir = {
                 let (_, global_head_transform) = bone_entity.get(humanoid.head).unwrap();
-    
+
                 match (target.1.position() - global_head_transform.translation()).try_normalize() {
                     Some(dir) => dir,
                     None => continue,
@@ -596,28 +590,28 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-                First,
-                update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
-            )
-            .add_systems(Startup, (create_player,))
-            .add_systems(
-                //player movement
-                Update,
-                (
-                    move_controllable,
-                    rotate_camera_view,
-                    follow,
-                    update_light_dir,
-                    update_head_dir,
-                ),
-            )
-            .add_systems(
-                //update sound
-                Update,
-                (
-                    update_sound_sink_pos,
-                    //update_sound_level
-                ),
-            );
+            First,
+            update_player_target.before(RaycastSystem::BuildRays::<PlayerTargetSet>),
+        )
+        .add_systems(Startup, (create_player,))
+        .add_systems(
+            //player movement
+            Update,
+            (
+                move_controllable,
+                rotate_camera_view,
+                follow,
+                update_light_dir,
+                update_head_dir,
+            ),
+        )
+        .add_systems(
+            //update sound
+            Update,
+            (
+                update_sound_sink_pos,
+                //update_sound_level
+            ),
+        );
     }
 }
