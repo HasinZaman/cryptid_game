@@ -12,7 +12,6 @@ use bevy::{
     },
     render::mesh::skinning::SkinnedMeshInverseBindposes,
     time::Time,
-    transform,
     window::{CursorMoved, PrimaryWindow, Window},
 };
 use bevy_mod_raycast::{

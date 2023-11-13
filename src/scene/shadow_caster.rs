@@ -1,7 +1,5 @@
 use bevy::{
-    pbr::{
-        MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE,
-    },
+    pbr::{MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE},
     prelude::*,
     reflect::{Reflect, TypeUuid},
     render::{
@@ -22,7 +20,6 @@ use bevy::{
 #[bind_group_data(ShadowCasterMaterialKey)]
 #[reflect(Default, Debug)]
 pub struct ShadowCasterMaterial {
-    
     #[reflect(ignore)]
     pub cull_mode: Option<Face>,
     pub unlit: bool,

@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
 use bevy::{
-    pbr::{
-        MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE,
-    },
+    pbr::{MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE},
     prelude::*,
     reflect::{Reflect, TypeUuid},
     render::{
