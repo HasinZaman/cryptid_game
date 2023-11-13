@@ -2,15 +2,16 @@ use std::collections::HashMap;
 
 use bevy::{
     pbr::{
-        MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE,
+        MaterialPipeline, MaterialPipelineKey, StandardMaterialFlags, PBR_PREPASS_SHADER_HANDLE,
     },
     prelude::*,
     reflect::{Reflect, TypeUuid},
     render::{
         mesh::MeshVertexBufferLayout,
+        render_asset::RenderAssets,
         render_resource::{
-            AsBindGroup, Face, RenderPipelineDescriptor, ShaderRef,
-            SpecializedMeshPipelineError,
+            AsBindGroup, AsBindGroupShaderType, Face, RenderPipelineDescriptor, ShaderRef,
+            ShaderType, SpecializedMeshPipelineError, TextureFormat,
         },
     },
 };
@@ -88,6 +89,7 @@ impl Plugin for FloorPlugin {
 #[derive(AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
 #[uuid = "e65799f2-923e-4548-8879-be574f9db999"]
 #[bind_group_data(FloorMaterialKey)]
+#[uniform(0, StandardMaterialUniform)]
 #[reflect(Default, Debug)]
 pub struct FloorMaterial {
     #[texture(1)]
@@ -205,5 +207,95 @@ pub fn parallax_mapping_method_max_steps(p: ParallaxMappingMethod) -> u32 {
     match p {
         ParallaxMappingMethod::Occlusion => 0,
         ParallaxMappingMethod::Relief { max_steps } => max_steps,
+    }
+}
+
+#[derive(Clone, Default, ShaderType)]
+pub struct StandardMaterialUniform {
+    pub base_color: Vec4,
+    pub emissive: Vec4,
+    pub roughness: f32,
+    pub metallic: f32,
+    pub reflectance: f32,
+    pub flags: u32,
+    pub alpha_cutoff: f32,
+    pub parallax_depth_scale: f32,
+    pub max_parallax_layer_count: f32,
+    pub max_relief_mapping_search_steps: u32,
+}
+
+impl AsBindGroupShaderType<StandardMaterialUniform> for FloorMaterial {
+    fn as_bind_group_shader_type(&self, images: &RenderAssets<Image>) -> StandardMaterialUniform {
+        let mut flags = StandardMaterialFlags::NONE;
+        if self.base_color_texture.is_some() {
+            flags |= StandardMaterialFlags::BASE_COLOR_TEXTURE;
+        }
+        // if self.emissive_texture.is_some() {
+        //     flags |= StandardMaterialFlags::EMISSIVE_TEXTURE;
+        // }
+        if self.metallic_texture.is_some() {
+            flags |= StandardMaterialFlags::METALLIC_ROUGHNESS_TEXTURE;
+        }
+        // if self.occlusion_texture.is_some() {
+        //     flags |= StandardMaterialFlags::OCCLUSION_TEXTURE;
+        // }
+        // if self.double_sided {
+        //     flags |= StandardMaterialFlags::DOUBLE_SIDED;
+        // }
+        if self.unlit {
+            flags |= StandardMaterialFlags::UNLIT;
+        }
+        // if self.fog_enabled {
+        //     flags |= StandardMaterialFlags::FOG_ENABLED;
+        // }
+        // if self.depth_map.is_some() {
+        //     flags |= StandardMaterialFlags::DEPTH_MAP;
+        // }
+        let has_normal_map = self.normal_map_texture.is_some();
+        if has_normal_map {
+            if let Some(texture) = images.get(self.normal_map_texture.as_ref().unwrap()) {
+                match texture.texture_format {
+                    // All 2-component unorm formats
+                    TextureFormat::Rg8Unorm
+                    | TextureFormat::Rg16Unorm
+                    | TextureFormat::Bc5RgUnorm
+                    | TextureFormat::EacRg11Unorm => {
+                        flags |= StandardMaterialFlags::TWO_COMPONENT_NORMAL_MAP;
+                    }
+                    _ => {}
+                }
+            }
+            // if self.flip_normal_map_y {
+            //     flags |= StandardMaterialFlags::FLIP_NORMAL_MAP_Y;
+            // }
+        }
+        // NOTE: 0.5 is from the glTF default - do we want this?
+        let mut alpha_cutoff = 0.5;
+        match self.alpha_mode {
+            AlphaMode::Opaque => flags |= StandardMaterialFlags::ALPHA_MODE_OPAQUE,
+            AlphaMode::Mask(c) => {
+                alpha_cutoff = c;
+                flags |= StandardMaterialFlags::ALPHA_MODE_MASK;
+            }
+            AlphaMode::Blend => flags |= StandardMaterialFlags::ALPHA_MODE_BLEND,
+            AlphaMode::Premultiplied => flags |= StandardMaterialFlags::ALPHA_MODE_PREMULTIPLIED,
+            AlphaMode::Add => flags |= StandardMaterialFlags::ALPHA_MODE_ADD,
+            AlphaMode::Multiply => flags |= StandardMaterialFlags::ALPHA_MODE_MULTIPLY,
+        };
+
+        StandardMaterialUniform {
+            base_color: Vec4::ZERO, //self.base_color.as_linear_rgba_f32().into(),
+            emissive: Vec4::ZERO,   //self.emissive.as_linear_rgba_f32().into(),
+            roughness: 0.,          //self.perceptual_roughness,
+            metallic: 0.,           //self.metallic,
+            reflectance: 0.,        //self.reflectance,
+            flags: flags.bits(),
+            alpha_cutoff,
+            parallax_depth_scale: 0.,     //self.parallax_depth_scale,
+            max_parallax_layer_count: 0., //self.max_parallax_layer_count,
+            max_relief_mapping_search_steps: parallax_mapping_method_max_steps(
+                self.parallax_mapping_method,
+            ),
+        }
     }
 }
