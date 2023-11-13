@@ -44,15 +44,6 @@ pub struct PlasticMaterial {
     #[texture(4)]
     #[sampler(5)]
     pub depth_map: Option<Handle<Image>>,
-    // #[reflect(ignore)]
-    // pub cull_mode: Option<Face>,
-    // pub unlit: bool,
-    // pub fog_enabled: bool,
-    // pub alpha_mode: AlphaMode,
-    // pub depth_bias: f32,
-    // pub parallax_depth_scale: f32,
-    // pub parallax_mapping_method: ParallaxMappingMethod,
-    // pub max_parallax_layer_count: f32,
 }
 
 impl Default for PlasticMaterial {
@@ -78,14 +69,6 @@ impl Default for PlasticMaterial {
             noise_texture_1: None,
             noise_texture_2: None,
             depth_map: None,
-            // cull_mode: Some(Face::Back),
-            // unlit: false,
-            // fog_enabled: true,
-            // alpha_mode: AlphaMode::Opaque,
-            // depth_bias: 0.0,
-            // parallax_depth_scale: 0.1,
-            // parallax_mapping_method: 16.0,
-            // max_parallax_layer_count: ParallaxMappingMethod::Occlusion,
         }
     }
 }

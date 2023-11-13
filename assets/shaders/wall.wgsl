@@ -19,8 +19,6 @@
 #endif
 
 // setting textures
-@group(1) @binding(0)
-var<uniform> material: pbr_types::StandardMaterial;
 
 // @group(1) @binding(1)
 // var base_color_texture: texture_2d<f32>;
@@ -268,7 +266,7 @@ fn fragment(
     pbr_input.material.perceptual_roughness = 1.;//roughness;
     pbr_input.material.metallic = 0.;//metallic;
 
-    pbr_input.material.flags = material.flags;//pbr_types::STANDARD_MATERIAL_FLAGS_ALPHA_MODE_OPAQUE;
+    pbr_input.material.flags = pbr_types::STANDARD_MATERIAL_FLAGS_ALPHA_MODE_OPAQUE;//pbr_types::STANDARD_MATERIAL_FLAGS_ALPHA_MODE_OPAQUE;
     pbr_input.material.alpha_cutoff = 0.5;
     pbr_input.material.parallax_depth_scale = 0.1;
     pbr_input.material.max_parallax_layer_count = 16.0;

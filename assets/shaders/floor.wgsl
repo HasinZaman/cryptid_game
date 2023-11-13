@@ -19,9 +19,6 @@
 #endif
 
 // setting textures
-// @group(1) @binding(0)
-// var<uniform> material: pbr_types::StandardMaterial;
-
 @group(1) @binding(1)
 var base_color_texture: texture_2d<f32>;
 

@@ -1,15 +1,13 @@
 use bevy::{
     pbr::{
-        MaterialPipeline, MaterialPipelineKey, StandardMaterialFlags, PBR_PREPASS_SHADER_HANDLE,
+        MaterialPipeline, MaterialPipelineKey, PBR_PREPASS_SHADER_HANDLE,
     },
     prelude::*,
     reflect::{Reflect, TypeUuid},
     render::{
         mesh::MeshVertexBufferLayout,
-        render_asset::RenderAssets,
         render_resource::{
-            AsBindGroup, AsBindGroupShaderType, Face, RenderPipelineDescriptor, ShaderRef,
-            ShaderType, SpecializedMeshPipelineError,
+            AsBindGroup, Face, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError,
         },
     },
 };
@@ -22,44 +20,15 @@ use bevy::{
 #[derive(AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
 #[uuid = "e65799f2-923e-4548-8879-be574f9db996"]
 #[bind_group_data(ShadowCasterMaterialKey)]
-#[uniform(0, ShadowCasterMaterialUniform)]
 #[reflect(Default, Debug)]
 pub struct ShadowCasterMaterial {
-    // pub base_color: Color,
-    // #[texture(1)]
-    // #[sampler(2)]
-    // pub base_color_texture: Option<Handle<Image>>,
-    // pub emissive: Color,
-    // #[texture(3)]
-    // #[sampler(4)]
-    // pub emissive_texture: Option<Handle<Image>>,
-    // pub perceptual_roughness: f32,
-    // pub metallic: f32,
-    // #[texture(5)]
-    // #[sampler(6)]
-    // pub metallic_roughness_texture: Option<Handle<Image>>,
-    // #[doc(alias = "specular_intensity")]
-    // pub reflectance: f32,
-    // #[texture(9)]
-    // #[sampler(10)]
-    // pub normal_map_texture: Option<Handle<Image>>,
-    // pub flip_normal_map_y: bool,
-    // #[texture(7)]
-    // #[sampler(8)]
-    // pub occlusion_texture: Option<Handle<Image>>,
-    // pub double_sided: bool,
+    
     #[reflect(ignore)]
     pub cull_mode: Option<Face>,
     pub unlit: bool,
     pub fog_enabled: bool,
     pub alpha_mode: AlphaMode,
     pub depth_bias: f32,
-    // #[texture(11)]
-    // #[sampler(12)]
-    // pub depth_map: Option<Handle<Image>>,
-    pub parallax_depth_scale: f32,
-    pub parallax_mapping_method: ParallaxMappingMethod,
-    pub max_parallax_layer_count: f32,
 }
 
 impl Default for ShadowCasterMaterial {
@@ -89,10 +58,6 @@ impl Default for ShadowCasterMaterial {
             fog_enabled: true,
             alpha_mode: AlphaMode::Opaque,
             depth_bias: 0.0,
-            // depth_map: None,
-            parallax_depth_scale: 0.1,
-            max_parallax_layer_count: 16.0,
-            parallax_mapping_method: ParallaxMappingMethod::Occlusion,
         }
     }
 }
@@ -120,106 +85,6 @@ impl From<Handle<Image>> for ShadowCasterMaterial {
     }
 }
 
-#[derive(Clone, Default, ShaderType)]
-pub struct ShadowCasterMaterialUniform {
-    pub base_color: Vec4,
-    pub emissive: Vec4,
-    pub roughness: f32,
-    pub metallic: f32,
-    pub reflectance: f32,
-    pub flags: u32,
-    pub alpha_cutoff: f32,
-    pub parallax_depth_scale: f32,
-    pub max_parallax_layer_count: f32,
-    pub max_relief_mapping_search_steps: u32,
-}
-
-impl AsBindGroupShaderType<ShadowCasterMaterialUniform> for ShadowCasterMaterial {
-    fn as_bind_group_shader_type(
-        &self,
-        _images: &RenderAssets<Image>,
-    ) -> ShadowCasterMaterialUniform {
-        let mut flags = StandardMaterialFlags::NONE;
-        // if self.base_color_texture.is_some() {
-        //     flags |= StandardMaterialFlags::BASE_COLOR_TEXTURE;
-        // }
-        // if self.emissive_texture.is_some() {
-        //     flags |= StandardMaterialFlags::EMISSIVE_TEXTURE;
-        // }
-        // if self.metallic_roughness_texture.is_some() {
-        //     flags |= StandardMaterialFlags::METALLIC_ROUGHNESS_TEXTURE;
-        // }
-        // if self.occlusion_texture.is_some() {
-        //     flags |= StandardMaterialFlags::OCCLUSION_TEXTURE;
-        // }
-        // if self.double_sided {
-        //     flags |= StandardMaterialFlags::DOUBLE_SIDED;
-        // }
-        if self.unlit {
-            flags |= StandardMaterialFlags::UNLIT;
-        }
-        if self.fog_enabled {
-            flags |= StandardMaterialFlags::FOG_ENABLED;
-        }
-        // if self.depth_map.is_some() {
-        //     flags |= StandardMaterialFlags::DEPTH_MAP;
-        // }
-        // let has_normal_map = self.normal_map_texture.is_some();
-        // if has_normal_map {
-        //     if let Some(texture) = images.get(self.normal_map_texture.as_ref().unwrap()) {
-        //         match texture.texture_format {
-        //             // All 2-component unorm formats
-        //             TextureFormat::Rg8Unorm
-        //             | TextureFormat::Rg16Unorm
-        //             | TextureFormat::Bc5RgUnorm
-        //             | TextureFormat::EacRg11Unorm => {
-        //                 flags |= StandardMaterialFlags::TWO_COMPONENT_NORMAL_MAP;
-        //             }
-        //             _ => {}
-        //         }
-        //     }
-        //     if self.flip_normal_map_y {
-        //         flags |= StandardMaterialFlags::FLIP_NORMAL_MAP_Y;
-        //     }
-        // }
-        // NOTE: 0.5 is from the glTF default - do we want this?
-        let mut alpha_cutoff = 0.5;
-        match self.alpha_mode {
-            AlphaMode::Opaque => flags |= StandardMaterialFlags::ALPHA_MODE_OPAQUE,
-            AlphaMode::Mask(c) => {
-                alpha_cutoff = c;
-                flags |= StandardMaterialFlags::ALPHA_MODE_MASK;
-            }
-            AlphaMode::Blend => flags |= StandardMaterialFlags::ALPHA_MODE_BLEND,
-            AlphaMode::Premultiplied => flags |= StandardMaterialFlags::ALPHA_MODE_PREMULTIPLIED,
-            AlphaMode::Add => flags |= StandardMaterialFlags::ALPHA_MODE_ADD,
-            AlphaMode::Multiply => flags |= StandardMaterialFlags::ALPHA_MODE_MULTIPLY,
-        };
-
-        ShadowCasterMaterialUniform {
-            base_color: Vec4::ZERO, //self.base_color.as_linear_rgba_f32().into(),
-            emissive: Vec4::ZERO,   //self.emissive.as_linear_rgba_f32().into(),
-            roughness: 0.,          //self.perceptual_roughness,
-            metallic: 0.,           //self.metallic,
-            reflectance: 0.,        //self.reflectance,
-            flags: flags.bits(),
-            alpha_cutoff,
-            parallax_depth_scale: self.parallax_depth_scale,
-            max_parallax_layer_count: self.max_parallax_layer_count,
-            max_relief_mapping_search_steps: parallax_mapping_method_max_steps(
-                self.parallax_mapping_method,
-            ),
-        }
-    }
-}
-
-pub fn parallax_mapping_method_max_steps(p: ParallaxMappingMethod) -> u32 {
-    match p {
-        ParallaxMappingMethod::Occlusion => 0,
-        ParallaxMappingMethod::Relief { max_steps } => max_steps,
-    }
-}
-
 /// The pipeline key for [`ShadowCasterMaterial`].
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ShadowCasterMaterialKey {
@@ -236,7 +101,7 @@ impl From<&ShadowCasterMaterial> for ShadowCasterMaterialKey {
             cull_mode: material.cull_mode,
             depth_bias: material.depth_bias as i32,
             relief_mapping: matches!(
-                material.parallax_mapping_method,
+                ParallaxMappingMethod::Occlusion,
                 ParallaxMappingMethod::Relief { .. }
             ),
         }
