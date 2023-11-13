@@ -159,7 +159,7 @@ fn fragment(
         f32(voxel.z + voxel.y * 500) / 500. % 500.0,
     );
 
-    var output_color: vec4<f32> = properties.colour;//
+    var output_color: vec4<f32> = properties.colour;
     var metallic: f32 = properties.metallic;
     
     let normal: vec3<f32> = bump(uv, properties.scale_2, properties.offset_2, noise_texture_1);//textureLoad(normal_texture, vec2<u32>(0u), 0).rgb;
