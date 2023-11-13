@@ -389,6 +389,31 @@ fn create_scene(
             ]),
             PlayerTargetSet,
         ));
+        commands.spawn((
+            prop::into_mesh_bundle(
+                plastic_props.0.get("plastic_bin_1").unwrap(),
+                &mut plastic_material,
+                Some(Transform {
+                    translation: Vec3 {
+                        x: 2.,
+                        y: 0.,
+                        z: -2.,
+                    },
+                    scale: Vec3::new(1., 1., 1.),
+                    rotation: Quat::default(),
+                }),
+            ),
+            plastic_props.0.get("plastic_bin_1").unwrap().clone(),
+            
+            PropVisibility::Hidden,
+            PropVisibilityTarget::from(vec![
+                Vec3::new(0.051597, 0.046506, 0.031542),
+                Vec3::new(0.051597, 0.046506, 0.468458),
+                Vec3::new(1.0584, 0.046506, 0.031542),
+                Vec3::new(1.0584, 0.046506, 0.468458),
+            ]),
+            PlayerTargetSet,
+        ));
     }
     // commands.spawn((
     //     a
