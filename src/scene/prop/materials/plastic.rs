@@ -12,6 +12,8 @@ use bevy::{
     },
 };
 
+use super::{Directions, Position};
+
 /// A material with "standard" properties used in PBR lighting
 /// Standard property values with pictures here
 /// <https://google.github.io/filament/Material%20Properties.pdf>.
@@ -19,7 +21,7 @@ use bevy::{
 /// May be created directly from a [`Color`] or an [`Image`].
 #[derive(AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
 #[uuid = "e65799f2-923e-4548-8879-be574f9dc989"]
-#[bind_group_data(StandardMaterialKey)]
+#[bind_group_data(PlasticMaterialKey)]
 #[uniform(0, PlasticMaterialUniform)]
 #[reflect(Default, Debug)]
 pub struct PlasticMaterial {
@@ -29,6 +31,12 @@ pub struct PlasticMaterial {
     pub offset_1: Vec2,
     pub scale_2: Vec2,
     pub offset_2: Vec2,
+    
+    pub forward: Vec3,
+    pub right: Vec3,
+    pub up: Vec3,
+
+    pub position: Vec3,
     #[texture(1)]
     pub noise_texture_1: Option<Handle<Image>>,
     #[texture(2)]
@@ -61,6 +69,12 @@ impl Default for PlasticMaterial {
             offset_1: Vec2 { x: 0., y: 0. },
             scale_2: Vec2 { x: 1., y: 1. },
             offset_2: Vec2 { x: 0., y: 0. },
+            
+            forward: Vec3::X,
+            right: Vec3::Z,
+            up: Vec3::Y,
+
+            position: Vec3::ZERO,
             noise_texture_1: None,
             noise_texture_2: None,
             depth_map: None,
@@ -103,6 +117,12 @@ pub struct PlasticMaterialUniform {
 
     colour: Vec4,
     metallic: f32,
+
+    forward: Vec3,
+    right: Vec3,
+    up: Vec3,
+
+    position: Vec3,
 }
 
 impl AsBindGroupShaderType<PlasticMaterialUniform> for PlasticMaterial {
@@ -115,22 +135,28 @@ impl AsBindGroupShaderType<PlasticMaterialUniform> for PlasticMaterial {
 
             colour: self.colour.as_linear_rgba_f32().into(),
             metallic: self.metallic,
+
+            forward: self.forward,
+            right: self.right,
+            up: self.up,
+
+            position: self.position,
         }
     }
 }
 
 /// The pipeline key for [`StandardMaterial`].
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct StandardMaterialKey {
+pub struct PlasticMaterialKey {
     normal_map: bool,
     cull_mode: Option<Face>,
     depth_bias: i32,
     relief_mapping: bool,
 }
 
-impl From<&PlasticMaterial> for StandardMaterialKey {
+impl From<&PlasticMaterial> for PlasticMaterialKey {
     fn from(_material: &PlasticMaterial) -> Self {
-        StandardMaterialKey {
+        PlasticMaterialKey {
             normal_map: false,
             cull_mode: Some(Face::Back),
             depth_bias: 0.0 as i32,
@@ -185,5 +211,25 @@ impl Material for PlasticMaterial {
     #[inline]
     fn depth_bias(&self) -> f32 {
         0.0
+    }
+}
+
+impl Directions for PlasticMaterial {
+    fn set_direction(&mut self, forward: Vec3, right: Vec3, up: Vec3) {
+        self.forward = forward;
+        self.right = right;
+        self.up = up;
+    }
+    fn get_direction(&self) -> (&Vec3, &Vec3, &Vec3) {
+        return (&self.forward, &self.right, &self.up);
+    }
+}
+impl Position for PlasticMaterial {
+    fn set_position(&mut self, new_position: Vec3) {
+        self.position = new_position;
+    }
+
+    fn get_position(&self) -> &Vec3 {
+        return &self.position;
     }
 }

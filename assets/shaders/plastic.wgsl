@@ -18,7 +18,6 @@
 #import bevy_pbr::gtao_utils gtao_multibounce
 #endif
 
-
 fn apply_normal_mapping(
     world_normal: vec3<f32>,
     
@@ -94,6 +93,29 @@ fn bump(
     );
 }
 
+fn projectVectorMagnitude(a: vec3<f32>, b: vec3<f32>) -> f32 {
+    let v = (dot(a, b) / dot(b, b)) * b;
+    return sqrt(dot(v,v));
+}
+fn get_voxel_position(in: MeshVertexOutput, voxel_size: f32) -> vec3<i32> {
+    var pos = vec3<f32> (
+        (in.world_position.x - properties.position.x),
+        (in.world_position.y - properties.position.y),
+        (in.world_position.z - properties.position.z)
+    );
+    let local_pos = vec3<f32> (
+        projectVectorMagnitude(pos, properties.forward),
+        projectVectorMagnitude(pos, properties.up),
+        projectVectorMagnitude(pos, properties.right)
+    );
+
+    return vec3<i32> (
+        i32(local_pos.x / voxel_size),
+        i32(local_pos.y / voxel_size),
+        i32(local_pos.z / voxel_size)
+    );
+}
+
 struct PlasticProperties {
     scale_1: vec2<f32>,
     offset_1: vec2<f32>,
@@ -101,6 +123,12 @@ struct PlasticProperties {
     offset_2: vec2<f32>,
     colour: vec4<f32>,
     metallic: f32,
+
+    forward: vec3<f32>,
+    right: vec3<f32>,
+    up: vec3<f32>,
+
+    position: vec4<f32>,
 }
 @group(1) @binding(0)
 var<uniform> properties: PlasticProperties;
@@ -123,11 +151,13 @@ fn fragment(
     let V = pbr_functions::calculate_view(in.world_position, is_orthographic);
 
     //var uv: vec2<f32> = in.uv;
-    var uv = vec2<f32> (
-        abs(in.world_position.x - in.position.x) % 1.0,
-        abs(in.world_position.z - in.position.z) % 1.0
-    );
+    let voxel = get_voxel_position(in, 1.0/32.);//1.0 / 16.);
 
+    //convert voxel into uv
+    var uv = vec2<f32> (
+        f32(voxel.x) / 500. % 500.0,
+        f32(voxel.z + voxel.y * 500) / 500. % 500.0,
+    );
 
     var output_color: vec4<f32> = properties.colour;//
     var metallic: f32 = properties.metallic;
@@ -187,8 +217,6 @@ fn fragment(
             normal
         );
     #endif
-
-    
 
     //world veiw
     pbr_input.V = V;
