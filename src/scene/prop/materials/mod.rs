@@ -1,4 +1,10 @@
-use bevy::{prelude::{MaterialPlugin, Plugin, Update, ResMut, Assets, Query, Handle, GlobalTransform, Vec3}, reflect::TypeUuid, asset::Asset};
+use bevy::{
+    asset::Asset,
+    prelude::{
+        Assets, GlobalTransform, Handle, MaterialPlugin, Plugin, Query, ResMut, Update, Vec3,
+    },
+    reflect::TypeUuid,
+};
 
 use self::plastic::PlasticMaterial;
 
@@ -16,18 +22,20 @@ pub(self) trait Position {
     fn get_position(&self) -> &Vec3;
 }
 
-
 fn update_direction_system<M: TypeUuid + Asset + Directions>(
     mut materials: ResMut<Assets<M>>,
-    query: Query<(&Handle<M>, &GlobalTransform)>
+    query: Query<(&Handle<M>, &GlobalTransform)>,
 ) {
     for (material, global_transform) in &query {
-    
         let Some(material) = materials.as_mut().get_mut(material) else {
             continue;
         };
 
-        let (forward, right, up) =  (global_transform.forward(), global_transform.right(), global_transform.up(),);
+        let (forward, right, up) = (
+            global_transform.forward(),
+            global_transform.right(),
+            global_transform.up(),
+        );
 
         if material.get_direction() != (&forward, &right, &up) {
             material.set_direction(forward, right, up);
@@ -36,16 +44,15 @@ fn update_direction_system<M: TypeUuid + Asset + Directions>(
 }
 fn update_position_system<M: TypeUuid + Asset + Position>(
     mut materials: ResMut<Assets<M>>,
-    query: Query<(&Handle<M>, &GlobalTransform)>
+    query: Query<(&Handle<M>, &GlobalTransform)>,
 ) {
     for (material, global_transform) in &query {
-    
         let Some(material) = materials.as_mut().get_mut(material) else {
             continue;
         };
 
         let (_scale, _rotation, position) = global_transform.to_scale_rotation_translation();
-        
+
         if material.get_position() != &position {
             material.set_position(position.clone());
         }
@@ -62,7 +69,7 @@ impl Plugin for MaterialsPlugin {
                 (
                     update_direction_system::<PlasticMaterial>,
                     update_position_system::<PlasticMaterial>,
-                )
+                ),
             );
     }
 }

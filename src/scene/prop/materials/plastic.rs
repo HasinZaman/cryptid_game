@@ -31,7 +31,7 @@ pub struct PlasticMaterial {
     pub offset_1: Vec2,
     pub scale_2: Vec2,
     pub offset_2: Vec2,
-    
+
     pub forward: Vec3,
     pub right: Vec3,
     pub up: Vec3,
@@ -69,7 +69,7 @@ impl Default for PlasticMaterial {
             offset_1: Vec2 { x: 0., y: 0. },
             scale_2: Vec2 { x: 1., y: 1. },
             offset_2: Vec2 { x: 0., y: 0. },
-            
+
             forward: Vec3::X,
             right: Vec3::Z,
             up: Vec3::Y,

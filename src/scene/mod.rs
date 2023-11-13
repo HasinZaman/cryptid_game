@@ -370,7 +370,7 @@ fn create_scene(
                 &mut plastic_material,
                 Some(Transform {
                     translation: Vec3 {
-                        x: 5.,
+                        x: 6.,
                         y: 0.,
                         z: -5.,
                     },
