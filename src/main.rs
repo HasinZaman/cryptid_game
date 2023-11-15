@@ -1,4 +1,4 @@
-// use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
+use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_mod_raycast::DefaultRaycastingPlugin;
 // use bevy::diagnostic::*;
@@ -15,6 +15,7 @@ pub mod player;
 pub mod rain;
 pub mod scene;
 pub mod standard_material;
+pub mod ik;
 
 fn main() {
     App::new()
@@ -30,11 +31,12 @@ fn main() {
             RainPlugin,
             MaterialPlugin::<ShadowCasterMaterial>::default(),
             HumanoidPlugin,
+            //IKPlugin,
         ))
         //debug plugins
-        // .add_plugins((
-        //     LogDiagnosticsPlugin::default(),
-        //     FrameTimeDiagnosticsPlugin::default()
-        // ))
+        .add_plugins((
+            LogDiagnosticsPlugin::default(),
+            FrameTimeDiagnosticsPlugin::default()
+        ))
         .run();
 }
