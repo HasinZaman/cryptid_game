@@ -154,9 +154,10 @@ fn fragment(
     let voxel = get_voxel_position(in, 1.0/32.);//1.0 / 16.);
 
     //convert voxel into uv
+    let layer_offset: i32 = 547;
     var uv = vec2<f32> (
         f32(voxel.x) / 500. % 500.0,
-        f32(voxel.z + voxel.y * 500) / 500. % 500.0,
+        f32(voxel.z + voxel.y * layer_offset) / 500. % 500.0,
     );
 
     var output_color: vec4<f32> = properties.colour;
