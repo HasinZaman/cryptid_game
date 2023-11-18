@@ -6,27 +6,45 @@ pub struct IKChain(pub Vec<(Entity, f32)>,);
 
 impl IKChain {
     pub fn new(entities: Vec<Entity>, transform_query: Query<&GlobalTransform>) -> Self {
+        entities.iter()
+            .map(|entity| (
+                *entity,
+                transform_query.get(*entity).unwrap().compute_transform()
+            ))
+            .collect()
+    }
 
-        let mut chain = Vec::with_capacity(entities.len());
+}
 
-        let mut iter = entities.iter().enumerate().peekable();
+impl FromIterator<(Entity, Transform)> for IKChain {
+    fn from_iter<T: IntoIterator<Item = (Entity, Transform)>>(iter: T) -> Self {
+
+        let mut chain = Vec::new();
+
+        let mut iter = iter.into_iter().peekable();
+
+
         loop {
-            let peek = match iter.peek() {
-                Some(val)=> *val.1,
+            let (_, next_transform) = match iter.peek() {
+                Some(val)=> *val,
                 None => break,
             };
 
-            let (index, current) = iter.next().unwrap();
+            let (entity, current_transform) = iter.next().unwrap();
 
-            chain[index] = (
-                *current, 
-                (transform_query.get(peek).unwrap().translation() -
-                transform_query.get(*current).unwrap().translation()).length()
-            );
-
+            chain.push((
+                entity, 
+                (next_transform.translation - current_transform.translation).length()
+            ));
         }
 
-        IKChain(chain)
+        match iter.next() {
+            Some((entity, _)) => chain.push((entity, 0.)),
+            None => {}
+        };
+
+        return IKChain(chain)
+
     }
 }
 
