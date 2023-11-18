@@ -11,6 +11,8 @@ use bevy::{
 };
 use gltf::Node;
 
+use crate::ik::IKChain;
+
 fn convert_transform((translation, rotation, scale): ([f32; 3], [f32; 4], [f32; 3])) -> Transform {
     let mut transform = Transform::default();
 
@@ -35,6 +37,36 @@ fn convert_transform((translation, rotation, scale): ([f32; 3], [f32; 4], [f32; 
 
 #[derive(Debug)]
 pub struct Limb(pub Entity, pub Entity, pub Entity);
+
+impl Limb {
+    pub fn iter<'a>(&'a self) -> LimbIterator<'a> {
+        LimbIterator {
+            limb: &self,
+            counter: 0,
+        }
+    }
+}
+
+pub struct LimbIterator<'a> {
+    limb: &'a Limb,
+    counter: usize,
+}
+
+impl<'a> Iterator for LimbIterator<'a> {
+    type Item=Entity;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.counter+=1;
+
+        match self.counter {
+            1 => Some(self.limb.0),
+            2 => Some(self.limb.1),
+            3 => Some(self.limb.2),
+            _ => None
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct LimbBuilder(Option<Entity>, Option<Entity>, Option<Entity>);
 
@@ -62,6 +94,55 @@ pub struct Humanoid {
 }
 
 impl Humanoid {
+    pub fn left_arm_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+        self.left_arm
+            .iter()
+            .map(|entity| (
+                entity,
+                global_transforms.get(entity).unwrap().compute_transform()
+            ))
+            .collect()
+    }
+    pub fn right_arm_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+        self.right_arm
+            .iter()
+            .map(|entity| (
+                entity,
+                global_transforms.get(entity).unwrap().compute_transform()
+            ))
+            .collect()
+    }
+
+    pub fn left_leg_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+        self.left_leg
+            .iter()
+            .map(|entity| (
+                entity,
+                global_transforms.get(entity).unwrap().compute_transform()
+            ))
+            .collect()
+    }
+    pub fn right_leg_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+        self.right_leg
+            .iter()
+            .map(|entity| (
+                entity,
+                global_transforms.get(entity).unwrap().compute_transform()
+            ))
+            .collect()
+    }
+
+
+    pub fn get_iks(&self, global_transforms: &Query<&GlobalTransform>) -> (IKChain, IKChain, IKChain, IKChain) {
+        let left_arm: IKChain = self.left_arm_ik(global_transforms);
+        let right_arm: IKChain = self.right_arm_ik(global_transforms);
+
+        let left_leg: IKChain = self.left_leg_ik(global_transforms);
+        let right_leg: IKChain = self.right_leg_ik(global_transforms);
+        
+        (left_arm, right_arm, left_leg, right_leg)
+    }
+
     pub fn debug(&self, entity_query: &Query<&GlobalTransform>) -> String {
         let mut output = String::new();
 
@@ -356,9 +437,9 @@ pub fn load_humanoid(
 
     let start_entity = entities[start_index].0;
 
-    let component: Humanoid = humanoid_builder.clone().into();
+    let humanoid_component: Humanoid = humanoid_builder.clone().into();
 
-    commands.entity(start_entity).insert(component);
+    commands.entity(start_entity).insert(humanoid_component);
     return Some((start_entity, humanoid_builder.into()));
 }
 
