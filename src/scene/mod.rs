@@ -8,7 +8,7 @@ use bevy::prelude::{
 };
 use bevy::transform::components::Transform;
 
-use crate::player::PlayerTargetSet;
+use crate::player::target::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
 use self::prop::materials::plastic::PlasticMaterial;
