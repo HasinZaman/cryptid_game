@@ -2,10 +2,10 @@ use std::f32::consts::PI;
 
 use bevy::{
     app::{App, Plugin},
-    ecs::{entity::Entity, component::Component},
+    ecs::{component::Component, entity::Entity},
     prelude::{
-        Camera, First, Input, IntoSystemConfigs, KeyCode,
-        Query, Res, SpatialSettings, SpotLight, Startup, Transform, Update, Vec3, With, Without,
+        Camera, First, Input, IntoSystemConfigs, KeyCode, Query, Res, SpatialSettings, SpotLight,
+        Startup, Transform, Update, Vec3, With, Without,
     },
     time::Time,
 };
@@ -13,78 +13,80 @@ use bevy_mod_raycast::prelude::RaycastSystem;
 
 use crate::scene::prop::sound_source::SoundSource;
 
-use self::target::PlayerTarget;
+use self::{controller::ControllerPlugin, movement::MovementPlugin, target::PlayerTarget};
 
+mod controller;
 mod create;
 pub mod follow;
-pub mod target;
 mod ik;
+mod movement;
+pub mod target;
 
 pub const EAR_GAP: f32 = 0.25;
 
 #[derive(Component)]
 pub struct Controllable;
 
-fn move_controllable(
-    time: Res<Time>,
-    keyboard_input: Res<Input<KeyCode>>,
-    camera: Query<&Transform, (With<Camera>, Without<Controllable>)>,
-    mut query: Query<&mut Transform, (With<Controllable>, Without<Camera>)>,
-) {
-    for mut transform in &mut query {
-        let (local_x, local_z) = {
-            let camera: Option<&Transform> = camera.iter().next();
-            match camera {
-                Some(t) => {
-                    let delta = t.translation - transform.translation;
+// fn move_controllable(
+//     time: Res<Time>,
+//     keyboard_input: Res<Input<KeyCode>>,
+//     camera: Query<&Transform, (With<Camera>, Without<Controllable>)>,
+//     mut query: Query<&mut Transform, (With<Controllable>, Without<Camera>)>,
+// ) {
+//     for mut transform in &mut query {
+//         let (local_x, local_z) = {
+//             let camera: Option<&Transform> = camera.iter().next();
+//             match camera {
+//                 Some(t) => {
+//                     let delta = t.translation - transform.translation;
 
-                    let forward = Vec3 {
-                        x: delta.x,
-                        y: 0.,
-                        z: delta.z,
-                    }
-                    .normalize();
+//                     let forward = Vec3 {
+//                         x: delta.x,
+//                         y: 0.,
+//                         z: delta.z,
+//                     }
+//                     .normalize();
 
-                    let side_ways = Vec3 {
-                        x: forward.z,
-                        y: 0.,
-                        z: -1. * forward.x,
-                    };
+//                     let side_ways = Vec3 {
+//                         x: forward.z,
+//                         y: 0.,
+//                         z: -1. * forward.x,
+//                     };
 
-                    (-1. * forward, side_ways)
-                }
-                None => (
-                    Vec3 {
-                        x: 1.,
-                        y: 0.,
-                        z: 0.,
-                    },
-                    Vec3 {
-                        x: 0.,
-                        y: 0.,
-                        z: 1.,
-                    },
-                ),
-            }
-        };
+//                     (-1. * forward, side_ways)
+//                 }
+//                 None => (
+//                     Vec3 {
+//                         x: 1.,
+//                         y: 0.,
+//                         z: 0.,
+//                     },
+//                     Vec3 {
+//                         x: 0.,
+//                         y: 0.,
+//                         z: 1.,
+//                     },
+//                 ),
+//             }
+//         };
 
-        //println!("{local_x:?}, {local_z:?}");
+//         //println!("{local_x:?}, {local_z:?}");
 
-        if keyboard_input.pressed(KeyCode::D) {
-            transform.translation = transform.translation + local_z * 5. * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::A) {
-            transform.translation = transform.translation + local_z * -5. * time.delta_seconds();
-        }
+//         if keyboard_input.pressed(KeyCode::D) {
+//             transform.translation = transform.translation + local_z * 5. * time.delta_seconds();
+//         }
+//         if keyboard_input.pressed(KeyCode::A) {
+//             transform.translation = transform.translation + local_z * -5. * time.delta_seconds();
+//         }
 
-        if keyboard_input.pressed(KeyCode::W) {
-            transform.translation = transform.translation + local_x * 5. * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::S) {
-            transform.translation = transform.translation + local_x * -5. * time.delta_seconds();
-        }
-    }
-}
+//         if keyboard_input.pressed(KeyCode::W) {
+//             transform.translation = transform.translation + local_x * 5. * time.delta_seconds();
+//         }
+//         if keyboard_input.pressed(KeyCode::S) {
+//             transform.translation = transform.translation + local_x * -5. * time.delta_seconds();
+//         }
+//     }
+// }
 
 fn rotate_camera_view(
     time: Res<Time>,
@@ -254,30 +256,33 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            First,
-            target::update_player_target.before(RaycastSystem::BuildRays::<target::PlayerTargetSet>),
-        )
-        .add_systems(Startup, (create::create_player,))
-        .add_systems(
-            //player movement
-            Update,
-            (
-                move_controllable,
-                rotate_camera_view,
-                follow::follow,
-                update_light_dir,
-                ik::update_head_dir,
-                ik::update_body_dir,
-            ),
-        )
-        .add_systems(
-            //update sound
-            Update,
-            (
-                update_sound_sink_pos,
-                //update_sound_level
-            ),
-        );
+        app.add_plugins((ControllerPlugin, MovementPlugin))
+            .add_systems(
+                First,
+                target::update_player_target
+                    .before(RaycastSystem::BuildRays::<target::PlayerTargetSet>),
+            )
+            .add_systems(Startup, (create::create_player,))
+            .add_systems(
+                //player movement
+                Update,
+                (
+                    // move_controllable,
+                    rotate_camera_view,
+                    // movement::update_pos,
+                    follow::follow,
+                    update_light_dir,
+                    ik::update_head_dir,
+                    ik::update_body_dir,
+                ),
+            )
+            .add_systems(
+                //update sound
+                Update,
+                (
+                    update_sound_sink_pos,
+                    //update_sound_level
+                ),
+            );
     }
 }
