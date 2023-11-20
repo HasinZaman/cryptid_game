@@ -53,16 +53,16 @@ pub struct LimbIterator<'a> {
 }
 
 impl<'a> Iterator for LimbIterator<'a> {
-    type Item=Entity;
+    type Item = Entity;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.counter+=1;
+        self.counter += 1;
 
         match self.counter {
             1 => Some(self.limb.0),
             2 => Some(self.limb.1),
             3 => Some(self.limb.2),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -97,49 +97,59 @@ impl Humanoid {
     pub fn left_arm_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
         self.left_arm
             .iter()
-            .map(|entity| (
-                entity,
-                global_transforms.get(entity).unwrap().compute_transform()
-            ))
+            .map(|entity| {
+                (
+                    entity,
+                    global_transforms.get(entity).unwrap().compute_transform(),
+                )
+            })
             .collect()
     }
     pub fn right_arm_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
         self.right_arm
             .iter()
-            .map(|entity| (
-                entity,
-                global_transforms.get(entity).unwrap().compute_transform()
-            ))
+            .map(|entity| {
+                (
+                    entity,
+                    global_transforms.get(entity).unwrap().compute_transform(),
+                )
+            })
             .collect()
     }
 
     pub fn left_leg_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
         self.left_leg
             .iter()
-            .map(|entity| (
-                entity,
-                global_transforms.get(entity).unwrap().compute_transform()
-            ))
+            .map(|entity| {
+                (
+                    entity,
+                    global_transforms.get(entity).unwrap().compute_transform(),
+                )
+            })
             .collect()
     }
     pub fn right_leg_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
         self.right_leg
             .iter()
-            .map(|entity| (
-                entity,
-                global_transforms.get(entity).unwrap().compute_transform()
-            ))
+            .map(|entity| {
+                (
+                    entity,
+                    global_transforms.get(entity).unwrap().compute_transform(),
+                )
+            })
             .collect()
     }
 
-
-    pub fn get_iks(&self, global_transforms: &Query<&GlobalTransform>) -> (IKChain, IKChain, IKChain, IKChain) {
+    pub fn get_iks(
+        &self,
+        global_transforms: &Query<&GlobalTransform>,
+    ) -> (IKChain, IKChain, IKChain, IKChain) {
         let left_arm: IKChain = self.left_arm_ik(global_transforms);
         let right_arm: IKChain = self.right_arm_ik(global_transforms);
 
         let left_leg: IKChain = self.left_leg_ik(global_transforms);
         let right_leg: IKChain = self.right_leg_ik(global_transforms);
-        
+
         (left_arm, right_arm, left_leg, right_leg)
     }
 

@@ -1,9 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    prelude::{
-        Color, EulerRot, Gizmos, GlobalTransform, Quat, Query, Res, Transform, Vec3, With,
-    },
+    prelude::{Color, EulerRot, Gizmos, GlobalTransform, Quat, Query, Res, Transform, Vec3, With},
     time::Time,
 };
 

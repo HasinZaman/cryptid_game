@@ -3,9 +3,8 @@ use std::f32::consts::PI;
 use bevy::{
     core_pipeline::clear_color::ClearColorConfig,
     prelude::{
-        default, AssetServer, Assets, Camera3d, Camera3dBundle, Color, Commands,
-        Quat, Res, ResMut, SpotLight, SpotLightBundle,
-        StandardMaterial, Transform, Vec3,
+        default, AssetServer, Assets, Camera3d, Camera3dBundle, Color, Commands, Quat, Res, ResMut,
+        SpotLight, SpotLightBundle, StandardMaterial, Transform, Vec3,
     },
     render::mesh::skinning::SkinnedMeshInverseBindposes,
 };
@@ -13,7 +12,12 @@ use bevy_mod_raycast::prelude::RaycastPluginState;
 
 use crate::{humanoid::load_humanoid, scene::prop::PropVisibilitySource};
 
-use super::{Controllable, follow::{Follow, FollowTarget, Coord}, target::{PlayerTargetSet, PlayerTarget}};
+use super::{
+    follow::{Coord, Follow, FollowTarget},
+    movement,
+    target::{PlayerTarget, PlayerTargetSet},
+    Controllable,
+};
 
 pub fn create_player(
     mut commands: Commands,
@@ -35,7 +39,9 @@ pub fn create_player(
     )
     .unwrap();
 
-    commands.entity(player).insert((Controllable,));
+    commands
+        .entity(player)
+        .insert((Controllable, movement::Direction(Vec3::ZERO)));
 
     //followable camera
     let camera_and_light_transform = Transform::from_xyz(0., 0., 10.).looking_to(

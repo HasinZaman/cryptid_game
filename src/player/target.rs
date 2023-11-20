@@ -1,16 +1,12 @@
 use bevy::{
-    ecs::{entity::Entity, system::Resource, component::Component},
-    prelude::{
-        Camera, EventReader, GlobalTransform, Query, ResMut, With,
-    },
+    ecs::{component::Component, entity::Entity, system::Resource},
+    prelude::{Camera, EventReader, GlobalTransform, Query, ResMut, With},
     window::{CursorMoved, PrimaryWindow, Window},
 };
 use bevy_mod_raycast::{
     prelude::{Raycast, RaycastSettings, RaycastVisibility},
     primitives::{IntersectionData, Ray3d},
 };
-
-
 
 #[derive(Resource)]
 pub struct PlayerTarget(pub Option<(Entity, IntersectionData)>);

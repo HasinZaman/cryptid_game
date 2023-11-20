@@ -1,10 +1,7 @@
 use bevy::{
-    ecs::{entity::Entity, component::Component},
-    prelude::{
-        GlobalTransform, Query, Transform, Vec3, Without,
-    },
+    ecs::{component::Component, entity::Entity},
+    prelude::{GlobalTransform, Query, Transform, Vec3, Without},
 };
-
 
 #[derive(Clone, Copy, Debug)]
 pub enum Coord {
