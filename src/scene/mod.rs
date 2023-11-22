@@ -11,6 +11,7 @@ use bevy::transform::components::Transform;
 use crate::player::target::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
+use self::nav_mesh::NavMeshBundle;
 use self::prop::materials::plastic::PlasticMaterial;
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
 use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget, Props};
@@ -18,6 +19,7 @@ use self::shadow_caster::ShadowCasterMaterial;
 use self::wall::{WallMaterial, WallPlugin, Walls};
 
 pub mod floor;
+pub mod nav_mesh;
 pub mod prop;
 pub mod shadow_caster;
 pub mod wall;
@@ -281,6 +283,13 @@ fn create_scene(
                         z: 1.,
                     },
                 }),
+            ),
+            PlayerTargetSet,
+        ));
+
+        commands.spawn((
+            NavMeshBundle::new(
+                asset_server.load("scenes/dev_playground/nav_mesh/nav_mesh.glb#Mesh0/Primitive0"),
             ),
             PlayerTargetSet,
         ));
