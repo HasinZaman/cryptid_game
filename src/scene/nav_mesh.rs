@@ -1,7 +1,7 @@
 use bevy::{
     asset::Handle,
     ecs::{bundle::Bundle, component::Component},
-    render::mesh::Mesh,
+    render::{mesh::Mesh, view::{Visibility, ComputedVisibility}}, transform::components::{Transform, GlobalTransform},
 };
 
 #[derive(Component)]
@@ -11,13 +11,21 @@ pub struct NavMesh;
 pub struct NavMeshBundle {
     nav_mesh: NavMesh,
     mesh: Handle<Mesh>,
+    transform: Transform,
+    global_transform: GlobalTransform,
+    visibility: Visibility,
+    computed_visibility: ComputedVisibility,
 }
 
 impl NavMeshBundle {
-    pub fn new(mesh: Handle<Mesh>) -> Self {
+    pub fn new(mesh: Handle<Mesh>, transform: Transform) -> Self {
         return NavMeshBundle {
             nav_mesh: NavMesh,
-            mesh: mesh,
+            mesh,
+            transform,
+            global_transform: GlobalTransform::default(),
+            visibility: Visibility::Visible,
+            computed_visibility: ComputedVisibility::default()
         };
     }
 }

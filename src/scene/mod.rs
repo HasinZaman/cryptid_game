@@ -1,17 +1,21 @@
 use std::f32::consts::PI;
 
+use bevy::asset::Handle;
 use bevy::audio::{PlaybackMode, Volume};
 use bevy::math::{Quat, Vec3};
+use bevy::pbr::StandardMaterial;
 use bevy::prelude::{
     App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res, ResMut,
     SpatialSettings, Startup,
 };
-use bevy::transform::components::Transform;
+use bevy::render::mesh::Mesh;
+use bevy::render::view::{Visibility, ComputedVisibility};
+use bevy::transform::components::{Transform, GlobalTransform};
 
 use crate::player::target::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
-use self::nav_mesh::NavMeshBundle;
+use self::nav_mesh::{NavMeshBundle, NavMesh};
 use self::prop::materials::plastic::PlasticMaterial;
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
 use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget, Props};
@@ -34,6 +38,7 @@ fn create_scene(
     mut wall_materials: ResMut<Assets<WallMaterial>>,
     mut shadow_caster_material: ResMut<Assets<ShadowCasterMaterial>>,
     mut plastic_material: ResMut<Assets<PlasticMaterial>>,
+    mut standard_material: ResMut<Assets<StandardMaterial>>
 ) {
     //shadow caster
     {
@@ -286,13 +291,6 @@ fn create_scene(
             ),
             PlayerTargetSet,
         ));
-
-        commands.spawn((
-            NavMeshBundle::new(
-                asset_server.load("scenes/dev_playground/nav_mesh/nav_mesh.glb#Mesh0/Primitive0"),
-            ),
-            PlayerTargetSet,
-        ));
     }
     //windows
     {
@@ -370,7 +368,15 @@ fn create_scene(
             SoundVolume::new(0.5, 10.),
         ));
     }
-
+    //nav mesh
+    {
+        commands.spawn((
+            NavMeshBundle::new(
+                asset_server.load("scenes/dev_playground/nav_mesh/nav_mesh.glb#Mesh0/Primitive0"),
+                Transform::default()
+            ),
+        ));
+    }
     //props
     {
         commands.spawn((
