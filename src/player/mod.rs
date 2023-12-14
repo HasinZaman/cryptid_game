@@ -274,6 +274,7 @@ impl Plugin for PlayerPlugin {
                     update_light_dir,
                     ik::update_head_dir,
                     ik::update_body_dir,
+                    ik::update_legs,
                 ),
             )
             .add_systems(
