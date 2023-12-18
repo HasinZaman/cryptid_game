@@ -213,11 +213,12 @@ pub fn update_legs(
             {
                 let dir = dir.0;
 
-                let transform = camera_query.iter().next().unwrap();
+                let camera_transform = camera_query.iter().next().unwrap();
+                let player_transform = transform_query.get(humanoid.body).unwrap();
 
-                let forward = transform.forward();
-                let right = transform.right();
-                let down = transform.down();
+                let forward = camera_transform.forward();
+                let right = camera_transform.right();
+                let down = player_transform.down();
 
                 (forward * dir.x + right * dir.z + down * dir.y + down).normalize()
             }
@@ -228,7 +229,8 @@ pub fn update_legs(
         let mesh_pos = nav_mesh_intercept(&ray, &mut ray_cast, &nav_mesh_query, &mut gizmos);
         // let nearest_pos = nearest_nav_mesh_intercept(&ray, todo!(), todo!());
         
-        // println!("{mesh_pos:?}");
+        println!("player_pos: {:?}", transform_query.get(humanoid.body).unwrap().translation());
+        println!("target: {mesh_pos:?}");
 
         // if let Some(mesh_pos) = mesh_pos {
         //     gizmos.sphere(mesh_pos, Quat::default(), 2.0, Color::RED);
