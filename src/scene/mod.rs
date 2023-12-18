@@ -1,21 +1,17 @@
 use std::f32::consts::PI;
 
-use bevy::asset::Handle;
 use bevy::audio::{PlaybackMode, Volume};
 use bevy::math::{Quat, Vec3};
-use bevy::pbr::StandardMaterial;
 use bevy::prelude::{
     App, AssetServer, Assets, Commands, MaterialMeshBundle, PlaybackSettings, Plugin, Res, ResMut,
     SpatialSettings, Startup,
 };
-use bevy::render::mesh::Mesh;
-use bevy::render::view::{Visibility, ComputedVisibility};
-use bevy::transform::components::{Transform, GlobalTransform};
+use bevy::transform::components::Transform;
 
 use crate::player::target::PlayerTargetSet;
 
 use self::floor::{FloorMaterial, FloorPlugin, Floors};
-use self::nav_mesh::{NavMeshBundle, NavMesh};
+use self::nav_mesh::NavMeshBundle;
 use self::prop::materials::plastic::PlasticMaterial;
 use self::prop::sound_source::{PropSoundBundle, SoundSource, SoundVolume};
 use self::prop::{PropPlugin, PropVisibility, PropVisibilityBlocker, PropVisibilityTarget, Props};
@@ -38,7 +34,6 @@ fn create_scene(
     mut wall_materials: ResMut<Assets<WallMaterial>>,
     mut shadow_caster_material: ResMut<Assets<ShadowCasterMaterial>>,
     mut plastic_material: ResMut<Assets<PlasticMaterial>>,
-    mut standard_material: ResMut<Assets<StandardMaterial>>
 ) {
     //shadow caster
     {
