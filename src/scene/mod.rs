@@ -365,12 +365,10 @@ fn create_scene(
     }
     //nav mesh
     {
-        commands.spawn((
-            NavMeshBundle::new(
-                asset_server.load("scenes/dev_playground/nav_mesh/nav_mesh.glb#Mesh0/Primitive0"),
-                Transform::default()
-            ),
-        ));
+        commands.spawn((NavMeshBundle::new(
+            asset_server.load("scenes/dev_playground/nav_mesh/nav_mesh.glb#Mesh0/Primitive0"),
+            Transform::default(),
+        ),));
     }
     //props
     {

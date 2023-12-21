@@ -1,7 +1,11 @@
 use bevy::{
     asset::Handle,
     ecs::{bundle::Bundle, component::Component},
-    render::{mesh::Mesh, view::{Visibility, ComputedVisibility}}, transform::components::{Transform, GlobalTransform},
+    render::{
+        mesh::Mesh,
+        view::{ComputedVisibility, Visibility},
+    },
+    transform::components::{GlobalTransform, Transform},
 };
 
 #[derive(Component)]
@@ -25,7 +29,7 @@ impl NavMeshBundle {
             transform,
             global_transform: GlobalTransform::default(),
             visibility: Visibility::Visible,
-            computed_visibility: ComputedVisibility::default()
+            computed_visibility: ComputedVisibility::default(),
         };
     }
 }
