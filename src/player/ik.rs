@@ -165,20 +165,16 @@ pub enum FootTarget {
 impl FootTarget {
     pub fn map(&mut self, new: Vec3) -> &mut Self {
         match self {
-            FootTarget::Locked(old) | FootTarget::Active(old) => {
-                *old = new
-            },
+            FootTarget::Locked(old) | FootTarget::Active(old) => *old = new,
         }
 
         self
     }
     pub fn swap(&mut self) -> &mut Self {
-
         *self = match self {
             FootTarget::Locked(val) => FootTarget::Active(*val),
             FootTarget::Active(val) => FootTarget::Locked(*val),
         };
-
 
         self
     }
@@ -237,18 +233,18 @@ impl HumanoidFeetTarget {
         };
     }
 
-    pub fn active_target(&self) -> &FootTarget{
+    pub fn active_target(&self) -> &FootTarget {
         match (&self.left_target, &self.right_target) {
             (FootTarget::Locked(_), FootTarget::Active(_)) => &self.right_target,
             (FootTarget::Active(_), FootTarget::Locked(_)) => &self.left_target,
-            _ => todo!()
+            _ => todo!(),
         }
     }
-    pub fn locked_target(&self) -> &FootTarget{
+    pub fn locked_target(&self) -> &FootTarget {
         match (&self.left_target, &self.right_target) {
             (FootTarget::Locked(_), FootTarget::Active(_)) => &self.left_target,
             (FootTarget::Active(_), FootTarget::Locked(_)) => &self.right_target,
-            _ => todo!()
+            _ => todo!(),
         }
     }
 }
@@ -333,11 +329,7 @@ fn nearest_nav_mesh_intercept(
     None
 }
 
-fn straight_legs_target(
-    down: Vec3,
-    pos: Vec3,
-    dist: f32,
-) -> Vec3 {
+fn straight_legs_target(down: Vec3, pos: Vec3, dist: f32) -> Vec3 {
     down * dist + pos
 }
 
@@ -368,23 +360,53 @@ pub fn update_legs(
             (false, ..) => {
                 let transform = transform_query.get(humanoid.body).unwrap();
 
-                let target = straight_legs_target(transform.down(), transform.translation(), feet_targets.leg_length_cache);
+                let target = straight_legs_target(
+                    transform.down(),
+                    transform.translation(),
+                    feet_targets.leg_length_cache,
+                );
 
-                feet_targets.left_target.map(target + transform.left() * feet_targets.leg_offset);
-                feet_targets.right_target.map(target + transform.right() * feet_targets.leg_offset);
+                feet_targets
+                    .left_target
+                    .map(target + transform.left() * feet_targets.leg_offset);
+                feet_targets
+                    .right_target
+                    .map(target + transform.right() * feet_targets.leg_offset);
                 //not moving
             }
             (true, ..) => {
                 //update position
-                new_target(body_transform, feet_targets, dir, &camera_query, &transform_query, humanoid, &mut ray_cast, &nav_mesh_query, &mut gizmos, &meshes);
-            },
+                new_target(
+                    body_transform,
+                    feet_targets,
+                    dir,
+                    &camera_query,
+                    &transform_query,
+                    humanoid,
+                    &mut ray_cast,
+                    &nav_mesh_query,
+                    &mut gizmos,
+                    &meshes,
+                );
+            }
         }
 
-        //update ik to new target        
+        //update ik to new target
     }
 }
 
-fn new_target(body_transform: &GlobalTransform, feet_targets: &mut HumanoidFeetTarget, dir: &Direction, camera_query: &Query<'_, '_, &Transform, With<Camera>>, transform_query: &Query<'_, '_, &GlobalTransform>, humanoid: &Humanoid, ray_cast: &mut Raycast<'_, '_>, nav_mesh_query: &Query<'_, '_, &Handle<Mesh>, With<NavMesh>>, gizmos: &mut Gizmos<'_>, meshes: &Res<'_, Assets<Mesh>>) {
+fn new_target(
+    body_transform: &GlobalTransform,
+    feet_targets: &mut HumanoidFeetTarget,
+    dir: &Direction,
+    camera_query: &Query<'_, '_, &Transform, With<Camera>>,
+    transform_query: &Query<'_, '_, &GlobalTransform>,
+    humanoid: &Humanoid,
+    ray_cast: &mut Raycast<'_, '_>,
+    nav_mesh_query: &Query<'_, '_, &Handle<Mesh>, With<NavMesh>>,
+    gizmos: &mut Gizmos<'_>,
+    meshes: &Res<'_, Assets<Mesh>>,
+) {
     let ray = Ray3d::new(
         body_transform.translation()
             + match (&feet_targets.left_target, &feet_targets.right_target) {
@@ -426,7 +448,11 @@ fn new_target(body_transform: &GlobalTransform, feet_targets: &mut HumanoidFeetT
             // legs be straight
             let transform = transform_query.get(humanoid.body).unwrap();
 
-            straight_legs_target(transform.down(), transform.translation(), feet_targets.leg_length_cache)
+            straight_legs_target(
+                transform.down(),
+                transform.translation(),
+                feet_targets.leg_length_cache,
+            )
         }
     };
 }
