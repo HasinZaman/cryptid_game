@@ -13,7 +13,9 @@ use bevy_mod_raycast::prelude::RaycastSystem;
 
 use crate::scene::prop::sound_source::SoundSource;
 
-use self::{controller::ControllerPlugin, movement::MovementPlugin, target::PlayerTarget};
+use self::{
+    controller::ControllerPlugin, ik::IKPlugin, movement::MovementPlugin, target::PlayerTarget,
+};
 
 mod controller;
 mod create;
@@ -256,13 +258,13 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((ControllerPlugin, MovementPlugin))
+        app.add_plugins((ControllerPlugin, MovementPlugin, IKPlugin))
             .add_systems(
                 First,
                 target::update_player_target
                     .before(RaycastSystem::BuildRays::<target::PlayerTargetSet>),
             )
-            .add_systems(Startup, (create::create_player,))
+            .add_systems(Startup, create::create_player)
             .add_systems(
                 //player movement
                 Update,
@@ -272,9 +274,6 @@ impl Plugin for PlayerPlugin {
                     // movement::update_pos,
                     follow::follow,
                     update_light_dir,
-                    ik::update_head_dir,
-                    ik::update_body_dir,
-                    ik::update_legs,
                 ),
             )
             .add_systems(
