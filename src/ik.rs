@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 use bevy::{
     app::{Plugin, Update},
     ecs::{component::Component, entity::Entity, system::Query},
@@ -5,7 +7,7 @@ use bevy::{
     transform::components::{GlobalTransform, Transform},
 };
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct IKChain(pub Vec<(Entity, f32)>);
 
 impl IKChain {
@@ -19,6 +21,13 @@ impl IKChain {
                 )
             })
             .collect()
+    }
+    pub fn length(&self) -> f32 {
+        self.0.iter().fold(0., |acc, (_, length)| acc + length)
+    }
+
+    pub fn iter(&self) -> Iter<'_, (Entity, f32)> {
+        self.0.iter()
     }
 }
 
