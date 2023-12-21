@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
 use bevy::{
+    ecs::query::ReadOnlyWorldQuery,
     pbr::SkinnedMeshJoints,
     prelude::{
         App, AssetServer, Assets, BuildChildren, Commands, Component, ComputedVisibility, Entity,
@@ -94,7 +95,10 @@ pub struct Humanoid {
 }
 
 impl Humanoid {
-    pub fn left_arm_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+    pub fn left_arm_ik<F: ReadOnlyWorldQuery>(
+        &self,
+        global_transforms: &Query<&GlobalTransform, F>,
+    ) -> IKChain {
         self.left_arm
             .iter()
             .map(|entity| {
@@ -105,7 +109,10 @@ impl Humanoid {
             })
             .collect()
     }
-    pub fn right_arm_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+    pub fn right_arm_ik<F: ReadOnlyWorldQuery>(
+        &self,
+        global_transforms: &Query<&GlobalTransform, F>,
+    ) -> IKChain {
         self.right_arm
             .iter()
             .map(|entity| {
@@ -117,7 +124,10 @@ impl Humanoid {
             .collect()
     }
 
-    pub fn left_leg_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+    pub fn left_leg_ik<F: ReadOnlyWorldQuery>(
+        &self,
+        global_transforms: &Query<&GlobalTransform, F>,
+    ) -> IKChain {
         self.left_leg
             .iter()
             .map(|entity| {
@@ -128,7 +138,10 @@ impl Humanoid {
             })
             .collect()
     }
-    pub fn right_leg_ik(&self, global_transforms: &Query<&GlobalTransform>) -> IKChain {
+    pub fn right_leg_ik<F: ReadOnlyWorldQuery>(
+        &self,
+        global_transforms: &Query<&GlobalTransform, F>,
+    ) -> IKChain {
         self.right_leg
             .iter()
             .map(|entity| {
@@ -140,9 +153,9 @@ impl Humanoid {
             .collect()
     }
 
-    pub fn get_iks(
+    pub fn get_iks<F: ReadOnlyWorldQuery>(
         &self,
-        global_transforms: &Query<&GlobalTransform>,
+        global_transforms: &Query<&GlobalTransform, F>,
     ) -> (IKChain, IKChain, IKChain, IKChain) {
         let left_arm: IKChain = self.left_arm_ik(global_transforms);
         let right_arm: IKChain = self.right_arm_ik(global_transforms);

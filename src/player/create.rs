@@ -2,30 +2,20 @@ use std::f32::consts::PI;
 
 use bevy::{
     core_pipeline::clear_color::ClearColorConfig,
-    ecs::{
-        component::Component,
-        entity::Entity,
-        event::{Event, EventReader, EventWriter},
-        query::{With, Without},
-        system::Query,
-    },
+    ecs::{component::Component, event::EventWriter},
     prelude::{
         default, AssetServer, Assets, Camera3d, Camera3dBundle, Color, Commands, Quat, Res, ResMut,
         SpotLight, SpotLightBundle, StandardMaterial, Transform, Vec3,
     },
     render::mesh::skinning::SkinnedMeshInverseBindposes,
-    transform::components::GlobalTransform,
 };
 use bevy_mod_raycast::prelude::RaycastPluginState;
 
-use crate::{
-    humanoid::{load_humanoid, Humanoid},
-    scene::prop::PropVisibilitySource,
-};
+use crate::{humanoid::load_humanoid, scene::prop::PropVisibilitySource};
 
 use super::{
     follow::{Coord, Follow, FollowTarget},
-    ik::{self, LegInitializeEvent},
+    ik::LegInitializeEvent,
     movement,
     target::{PlayerTarget, PlayerTargetSet},
     Controllable,
