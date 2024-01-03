@@ -4,12 +4,10 @@ use std::{
 };
 
 use bevy::{
-    app::{Plugin, Update},
     ecs::{component::Component, entity::Entity, system::Query},
     math::Vec3,
     transform::components::{GlobalTransform, Transform},
 };
-use rand::distributions::uniform::UniformSampler;
 
 #[derive(Component, Debug)]
 pub struct IKChain(pub Vec<(Entity, f32)>);
